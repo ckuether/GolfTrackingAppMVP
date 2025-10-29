@@ -49,6 +49,7 @@ import com.example.core_ui.utils.UiEvent
 import com.example.core_ui.utils.UiText
 import com.example.location_domain.domain.model.ScreenPoint
 import com.example.location_domain.domain.service.MapProjectionService
+import com.example.round_of_golf_domain.data.model.RoundOfGolfEvent
 import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseCase
 import com.example.round_of_golf_presentation.presentation.components.DraggableMarker
 import com.example.round_of_golf_presentation.presentation.components.HoleInfoCard
@@ -99,6 +100,7 @@ fun RoundOfGolf(
     val currentScoreCard by viewModel.currentScoreCard.collectAsStateWithLifecycle()
 
     // Golf course and hole state
+    //TODO: Add Launched Effect that
     var currentHoleNumber by remember { mutableStateOf(1) }
     var currentHole by remember {
         mutableStateOf(
@@ -299,6 +301,7 @@ fun RoundOfGolf(
                     showFullScoreCard = true
                 }
                 RoundOfGolfUiEvent.NextHoleClicked -> {
+                    //TODO: Check if Current Hole Finished
                     navigateToNextHole()
                     resetUITimer()
                 }
@@ -324,8 +327,12 @@ fun RoundOfGolf(
                     resetUITimer()
                 }
                 is RoundOfGolfUiEvent.UserLocationUpdated -> {
-                    val location = event.location
-                    //TODO: Do Something
+                    trackEventUseCase.execute(
+                        event = RoundOfGolfEvent.LocationUpdated(location = event.location),
+                        roundId = currentScoreCard.roundId,
+                        playerId = currentPlayer.id
+                    )
+                    updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString(event.location.toString())))
                 }
                 is RoundOfGolfUiEvent.TargetLocationUpdated -> {
                     targetLocation = event.location

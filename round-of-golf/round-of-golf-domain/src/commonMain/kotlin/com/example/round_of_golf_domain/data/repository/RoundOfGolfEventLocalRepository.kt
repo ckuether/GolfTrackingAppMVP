@@ -3,7 +3,7 @@ package com.example.round_of_golf_domain.data.repository
 import com.example.round_of_golf_domain.data.model.RoundOfGolfEvent
 import kotlinx.coroutines.flow.Flow
 
-interface RoundOfGolfEventRepository {
+interface RoundOfGolfEventLocalRepository {
 
     /**
      * Insert a single event
@@ -12,7 +12,6 @@ interface RoundOfGolfEventRepository {
         event: RoundOfGolfEvent,
         roundId: Long,
         playerId: Long,
-        holeNumber: Int?
     )
 
     /**

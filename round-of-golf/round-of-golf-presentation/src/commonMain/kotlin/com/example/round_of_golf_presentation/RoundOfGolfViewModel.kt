@@ -115,8 +115,7 @@ class RoundOfGolfViewModel(
                                 trackEventUseCase.execute(
                                     event = locationEvent,
                                     roundId = roundId,
-                                    playerId = currentPlayer.id,
-                                    holeNumber = null // Location events are not hole-specific
+                                    playerId = currentPlayer.id
                                 )
                                 
                                 logger.debug(TAG, "Location event saved to unified event system successfully")

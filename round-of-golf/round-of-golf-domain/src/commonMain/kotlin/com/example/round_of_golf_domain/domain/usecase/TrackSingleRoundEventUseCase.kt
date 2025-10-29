@@ -1,14 +1,15 @@
 package com.example.round_of_golf_domain.domain.usecase
 
 import com.example.round_of_golf_domain.data.model.RoundOfGolfEvent
-import com.example.round_of_golf_domain.data.repository.RoundOfGolfEventRepository
+import com.example.round_of_golf_domain.data.repository.RoundOfGolfEventLocalRepository
+import com.example.shared.platform.getCurrentTimeMillis
 
 /**
  * Use case for tracking a single round of golf event
  * Single Responsibility: Store one event to the event repository
  */
 class TrackSingleRoundEventUseCase(
-    private val eventRepository: RoundOfGolfEventRepository
+    private val eventRepository: RoundOfGolfEventLocalRepository
 ) {
     
     /**
@@ -17,14 +18,12 @@ class TrackSingleRoundEventUseCase(
     suspend fun execute(
         event: RoundOfGolfEvent,
         roundId: Long,
-        playerId: Long,
-        holeNumber: Int?,
+        playerId: Long
     ) {
         eventRepository.insertEvent(
             event = event,
             roundId = roundId,
-            playerId = playerId,
-            holeNumber = holeNumber
+            playerId = playerId
         )
     }
 }

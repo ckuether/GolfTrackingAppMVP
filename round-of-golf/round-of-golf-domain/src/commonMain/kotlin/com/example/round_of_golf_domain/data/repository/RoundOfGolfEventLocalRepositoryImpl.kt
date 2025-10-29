@@ -5,17 +5,16 @@ import com.example.round_of_golf_domain.data.model.RoundOfGolfEvent
 import com.example.round_of_golf_domain.data.model.toEntity
 import kotlinx.coroutines.flow.Flow
 
-class RoundOfGolfEventRepositoryImpl(
+class RoundOfGolfEventLocalRepositoryImpl(
     private val eventDao: RoundOfGolfEventDao
-) : RoundOfGolfEventRepository {
+) : RoundOfGolfEventLocalRepository {
 
     override suspend fun insertEvent(
         event: RoundOfGolfEvent,
         roundId: Long,
         playerId: Long,
-        holeNumber: Int?
     ) {
-        val eventEntity = event.toEntity(roundId = roundId, playerId = playerId, holeNumber = holeNumber)
+        val eventEntity = event.toEntity(roundId = roundId, playerId = playerId)
         eventDao.insertEvent(eventEntity)
     }
 

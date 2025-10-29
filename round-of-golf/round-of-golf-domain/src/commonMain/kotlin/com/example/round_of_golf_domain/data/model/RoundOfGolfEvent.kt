@@ -1,6 +1,7 @@
 package com.example.round_of_golf_domain.data.model
 
 import com.example.round_of_golf_domain.data.entity.RoundOfGolfEventEntity
+import com.example.shared.data.model.GolfClubType
 import com.example.shared.data.model.Location
 import com.example.shared.platform.getCurrentTimeMillis
 import kotlinx.serialization.Serializable
@@ -14,8 +15,7 @@ sealed interface RoundOfGolfEvent {
         get() = when (this) {
             is LocationUpdated -> EventType.LOCATION_UPDATED
             is ShotTracked -> EventType.SHOT_TRACKED
-            is NextHole -> EventType.NEXT_HOLE
-            is PreviousHole -> EventType.PREVIOUS_HOLE
+            is HoleChanged -> EventType.HOLE_CHANGED
             is FinishRound -> EventType.FINISH_ROUND
         }
 
@@ -29,18 +29,12 @@ sealed interface RoundOfGolfEvent {
     data class ShotTracked(
         override val timestamp: Long = getCurrentTimeMillis(),
         val holeNumber: Int,
-        //TODO: Add Club
-//        val club: Club
-//        val location: Location
+        val club: GolfClubType,
+        val location: Location
     ): RoundOfGolfEvent
 
     @Serializable
-    data class NextHole(
-        override val timestamp: Long = getCurrentTimeMillis()
-    ): RoundOfGolfEvent
-
-    @Serializable
-    data class PreviousHole(
+    data class HoleChanged(
         override val timestamp: Long = getCurrentTimeMillis()
     ): RoundOfGolfEvent
 
@@ -53,7 +47,6 @@ sealed interface RoundOfGolfEvent {
 fun RoundOfGolfEvent.toEntity(
     roundId: Long,
     playerId: Long,
-    holeNumber: Int? = null
 ): RoundOfGolfEventEntity {
     val eventData = Json.encodeToString(this)
 
@@ -62,7 +55,6 @@ fun RoundOfGolfEvent.toEntity(
         roundId = roundId,
         eventType = eventType,
         eventData = eventData,
-        holeNumber = holeNumber,
         playerId = playerId
     )
 }
@@ -70,7 +62,6 @@ fun RoundOfGolfEvent.toEntity(
 object EventType {
     const val LOCATION_UPDATED = "LocationUpdated"
     const val SHOT_TRACKED = "ShotTracked"
-    const val NEXT_HOLE = "NextHole"
-    const val PREVIOUS_HOLE = "PreviousHole"
+    const val HOLE_CHANGED = "HoleChanged"
     const val FINISH_ROUND = "FinishRound"
 }

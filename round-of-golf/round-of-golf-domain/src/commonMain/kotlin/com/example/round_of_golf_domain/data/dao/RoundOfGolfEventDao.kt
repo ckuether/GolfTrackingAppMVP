@@ -22,9 +22,6 @@ interface RoundOfGolfEventDao {
     @Query("SELECT * FROM round_of_golf_events WHERE roundId = :roundId ORDER BY timestamp ASC")
     suspend fun getEventsForRoundSuspend(roundId: Long): List<RoundOfGolfEventEntity>
 
-    @Query("SELECT * FROM round_of_golf_events WHERE roundId = :roundId AND holeNumber = :holeNumber ORDER BY timestamp ASC")
-    fun getEventsForHole(roundId: Long, holeNumber: Int): Flow<List<RoundOfGolfEventEntity>>
-
     @Query("SELECT * FROM round_of_golf_events WHERE roundId = :roundId AND eventType = :eventType ORDER BY timestamp ASC")
     fun getEventsByType(roundId: Long, eventType: String): Flow<List<RoundOfGolfEventEntity>>
 
