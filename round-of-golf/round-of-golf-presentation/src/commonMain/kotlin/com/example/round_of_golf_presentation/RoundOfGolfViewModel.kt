@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.location_domain.data.model.LocationTrackingUiState
 import com.example.location_domain.domain.usecase.CheckLocationPermissionUseCase
 import com.example.location_domain.domain.usecase.RequestLocationPermissionUseCase
-import com.example.round_of_golf_domain.data.model.RoundOfGolfEvent
 import com.example.location_domain.domain.usecase.PermissionResult
 import com.example.location_domain.domain.service.LocationTrackingService
 import com.example.round_of_golf_domain.data.model.LocationUpdated
@@ -39,17 +38,17 @@ class RoundOfGolfViewModel(
     private val saveScoreCardUseCase: SaveScoreCardUseCase,
     private val logger: Logger
 ) : ViewModel() {
-    
+
     companion object Companion {
         private const val TAG = "LocationTrackingViewModel"
     }
-    
+
     private val _locationState = MutableStateFlow(LocationTrackingUiState())
     val locationState: StateFlow<LocationTrackingUiState> = _locationState.asStateFlow()
 
     private val _currentScoreCard = MutableStateFlow(ScoreCard())
     val currentScoreCard: StateFlow<ScoreCard> = _currentScoreCard.asStateFlow()
-    
+
     private val roundId: Long get() = _currentScoreCard.value.roundId
 
     private var trackingJob: Job? = null
@@ -57,29 +56,29 @@ class RoundOfGolfViewModel(
     private var _roundOfGolfUiEvent = MutableStateFlow<RoundOfGolfUiEvent?>(null)
     val roundOfGolfUiEvent: StateFlow<RoundOfGolfUiEvent?> = _roundOfGolfUiEvent.asStateFlow()
 
-    fun updateRoundOfGolfUiEvent(uiEvent: RoundOfGolfUiEvent?){
+    fun updateRoundOfGolfUiEvent(uiEvent: RoundOfGolfUiEvent?) {
         _roundOfGolfUiEvent.value = uiEvent
     }
 
-    fun clearRoundOfGolfUiEvent(){
+    fun clearRoundOfGolfUiEvent() {
         _roundOfGolfUiEvent.value = null
     }
 
     private var _trackShotUiEvent = MutableStateFlow<TrackShotUiEvent?>(null)
     val trackShotUiEvent: StateFlow<TrackShotUiEvent?> = _trackShotUiEvent.asStateFlow()
 
-    fun updateTrackShotUiEvent(uiEvent: TrackShotUiEvent?){
+    fun updateTrackShotUiEvent(uiEvent: TrackShotUiEvent?) {
         _trackShotUiEvent.value = uiEvent
     }
 
-    fun clearTrackShotUiEvent(){
+    fun clearTrackShotUiEvent() {
         _trackShotUiEvent.value = null
     }
 
     init {
         checkPermissionStatus()
     }
-    
+
     fun startLocationTracking() {
         logger.info(TAG, "startLocationTracking() called")
         viewModelScope.launch {
@@ -92,51 +91,60 @@ class RoundOfGolfViewModel(
                 )
                 return@launch
             }
-            
+
             logger.info(TAG, "Permission granted, proceeding with tracking")
-            
+
             // Cancel any existing tracking job but don't stop the service yet
             trackingJob?.cancel()
             trackingJob = null
-            
+
             try {
                 logger.info(TAG, "Setting UI state and starting location service")
-                _locationState.value = _locationState.value.copy(isLoading = true, isTracking = true, error = null)
-                
+                _locationState.value =
+                    _locationState.value.copy(isLoading = true, isTracking = true, error = null)
+
                 logger.info(TAG, "Calling locationTrackingService.startLocationTracking()")
-                trackingJob = locationTrackingService.startLocationTracking()
-                    .onEach { location ->
-                        // Only save to database, no UI updates to prevent recomposition
-                        launch(Dispatchers.IO) {
-                            try {
-                                val locationEvent = LocationUpdated(
-                                    location = location
-                                )
-                                
-                                trackEventUseCase.execute(
-                                    event = locationEvent,
-                                    roundId = roundId,
-                                    playerId = currentPlayer.id
-                                )
-                                
-                                logger.debug(TAG, "Location event saved to unified event system successfully")
-                            } catch (error: Exception) {
-                                logger.error(TAG, "Failed to save location event to unified system", error)
-                            }
+                trackingJob = locationTrackingService.startLocationTracking().onEach { location ->
+                    logger.info(TAG, "startLocationTracking() Location Triggered")
+                    // Only save to database, no UI updates to prevent recomposition
+                    try {
+                        try {
+                            val locationEvent = LocationUpdated(
+                                location = location
+                            )
+
+                            trackEventUseCase.execute(
+                                event = locationEvent,
+                                roundId = roundId,
+                                playerId = currentPlayer.id
+                            )
+
+                            logger.debug(
+                                TAG,
+                                "Location event saved to unified event system successfully"
+                            )
+                        } catch (error: Exception) {
+                            logger.error(
+                                TAG,
+                                "Failed to save location event to unified system",
+                                error
+                            )
                         }
+
+                        logger.info(TAG, "Coroutine launched successfully")
+                    } catch (error: Exception) {
+                        logger.error(TAG, "Failed to launch coroutine", error)
                     }
-                    .catch { throwable ->
-                        val errorMessage = when (throwable) {
-                            else -> "Location tracking error: ${throwable.message}"
-                        }
-                        _locationState.value = _locationState.value.copy(
-                            isLoading = false,
-                            isTracking = false,
-                            error = errorMessage
-                        )
+                }.catch { throwable ->
+                    val errorMessage = when (throwable) {
+                        else -> "Location tracking error: ${throwable.message}"
                     }
-                    .launchIn(viewModelScope)
-                    
+                    _locationState.value = _locationState.value.copy(
+                        isLoading = false,
+                        isTracking = false,
+                        error = errorMessage
+                    )
+                }.launchIn(viewModelScope)
             } catch (e: Exception) {
                 _locationState.value = _locationState.value.copy(
                     isLoading = false,
@@ -172,10 +180,10 @@ class RoundOfGolfViewModel(
     fun requestLocationPermission() {
         viewModelScope.launch {
             _locationState.value = _locationState.value.copy(isRequestingPermission = true, error = null)
-            
+
             try {
                 val result = requestLocationPermissionUseCase()
-                
+
                 when (result) {
                     is PermissionResult.Granted -> {
                         _locationState.value = _locationState.value.copy(
@@ -187,6 +195,7 @@ class RoundOfGolfViewModel(
                         logger.info(TAG, "Permission granted, starting location tracking")
                         startLocationTracking()
                     }
+
                     is PermissionResult.Denied -> {
                         _locationState.value = _locationState.value.copy(
                             hasPermission = false,
@@ -194,6 +203,7 @@ class RoundOfGolfViewModel(
                             error = "Location permission denied. Please try again."
                         )
                     }
+
                     is PermissionResult.PermanentlyDenied -> {
                         _locationState.value = _locationState.value.copy(
                             hasPermission = false,
@@ -211,7 +221,7 @@ class RoundOfGolfViewModel(
         }
     }
 
-    fun saveHoleScore(holeNumber: Int, score: Int){
+    fun saveHoleScore(holeNumber: Int, score: Int) {
         val currentCard = _currentScoreCard.value
         val updatedScorecard = currentCard.scorecard.toMutableMap()
         updatedScorecard[holeNumber] = score
@@ -226,7 +236,10 @@ class RoundOfGolfViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             saveScoreCardUseCase(updatedCard).fold(
                 onSuccess = {
-                    logger.info(TAG, "Updated hole $holeNumber score to $score and saved to database")
+                    logger.info(
+                        TAG,
+                        "Updated hole $holeNumber score to $score and saved to database"
+                    )
                 },
                 onFailure = { error ->
                     logger.error(TAG, "Failed to save scorecard to database", error)
@@ -234,24 +247,24 @@ class RoundOfGolfViewModel(
             )
         }
     }
-    
+
     fun getHoleScore(holeNumber: Int): Int? {
         return _currentScoreCard.value.scorecard[holeNumber]
     }
-    
+
     fun getTotalScore(): Int {
         return _currentScoreCard.value.scorecard.values.filterNotNull().sum()
     }
-    
+
     fun getCompletedHolesPar(): Int {
         val completedHoles = _currentScoreCard.value.scorecard.keys
         return course.holes.filter { it.id in completedHoles }.sumOf { it.par }
     }
-    
+
     fun getScoreToPar(): String {
         val totalScore = getTotalScore()
         val completedPar = getCompletedHolesPar()
-        
+
         return if (totalScore > 0 && completedPar > 0) {
             val difference = totalScore - completedPar
             when {
@@ -263,7 +276,7 @@ class RoundOfGolfViewModel(
             "E"
         }
     }
-    
+
     fun checkPermissionStatus() {
         viewModelScope.launch {
             try {
@@ -272,7 +285,7 @@ class RoundOfGolfViewModel(
                     hasPermission = hasPermission,
                     isRequestingPermission = false // Reset requesting flag
                 )
-                
+
                 // Automatically start location tracking if permission is granted
                 if (hasPermission && !_locationState.value.isTracking) {
                     logger.info(TAG, "Permission granted, starting location tracking automatically")

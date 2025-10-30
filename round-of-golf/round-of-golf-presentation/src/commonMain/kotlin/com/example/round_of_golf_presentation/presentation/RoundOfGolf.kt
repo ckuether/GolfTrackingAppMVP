@@ -353,13 +353,8 @@ fun RoundOfGolf(
                     val score = event.score
                     //TODO: Do something with putts
                     val putts = event.putts
-
-
-                    //TODO: Add to Event To Database
-                    // Handle score submission
                     viewModel.saveHoleScore(currentHoleNumber, score)
                     navigateToNextHole()
-
                 }
                 RoundOfGolfUiEvent.OnFinishRound -> {
                     //TODO: Do something
