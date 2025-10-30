@@ -35,4 +35,8 @@ data class ScoreCard(
     
     val toPar: Int
         get() = totalScore - (holesPlayed * 4) // Assuming all holes are par 4
+
+    fun getHoleScore(holeNumber: Int): Int?{
+        return scorecard[holeNumber]
+    }
 }

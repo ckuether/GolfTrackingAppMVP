@@ -8,6 +8,7 @@ import com.example.location_domain.domain.usecase.RequestLocationPermissionUseCa
 import com.example.round_of_golf_domain.data.model.RoundOfGolfEvent
 import com.example.location_domain.domain.usecase.PermissionResult
 import com.example.location_domain.domain.service.LocationTrackingService
+import com.example.round_of_golf_domain.data.model.LocationUpdated
 import com.example.shared.data.model.Course
 import com.example.shared.data.model.ScoreCard
 import com.example.shared.platform.getCurrentTimeMillis
@@ -108,7 +109,7 @@ class RoundOfGolfViewModel(
                         // Only save to database, no UI updates to prevent recomposition
                         launch(Dispatchers.IO) {
                             try {
-                                val locationEvent = RoundOfGolfEvent.LocationUpdated(
+                                val locationEvent = LocationUpdated(
                                     location = location
                                 )
                                 

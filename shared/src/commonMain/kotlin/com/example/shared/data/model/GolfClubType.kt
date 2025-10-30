@@ -1,5 +1,8 @@
 package com.example.shared.data.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class GolfClubType(val clubName: String, val shortName: String, val range: Pair<Int, Int>? = null) {
 
     Driver("Driver", "Dr",Pair(250, 300)),

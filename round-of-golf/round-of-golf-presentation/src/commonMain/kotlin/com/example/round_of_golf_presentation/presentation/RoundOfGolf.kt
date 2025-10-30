@@ -49,8 +49,9 @@ import com.example.core_ui.utils.UiEvent
 import com.example.core_ui.utils.UiText
 import com.example.location_domain.domain.model.ScreenPoint
 import com.example.location_domain.domain.service.MapProjectionService
-import com.example.round_of_golf_domain.data.model.RoundOfGolfEvent
+import com.example.round_of_golf_domain.data.model.LocationUpdated
 import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseCase
+import com.example.round_of_golf_domain.domain.usecase.TrackHoleChangedEventUseCase
 import com.example.round_of_golf_presentation.presentation.components.DraggableMarker
 import com.example.round_of_golf_presentation.presentation.components.HoleInfoCard
 import com.example.round_of_golf_presentation.presentation.components.HoleNavigationCard
@@ -95,12 +96,12 @@ fun RoundOfGolf(
 
     val mapProjectionService: MapProjectionService = koinInject()
     val trackEventUseCase: TrackSingleRoundEventUseCase = koinInject()
+    val trackHoleChangedEventUseCase: TrackHoleChangedEventUseCase = koinInject()
     val locationState by viewModel.locationState.collectAsStateWithLifecycle()
 
     val currentScoreCard by viewModel.currentScoreCard.collectAsStateWithLifecycle()
 
     // Golf course and hole state
-    //TODO: Add Launched Effect that
     var currentHoleNumber by remember { mutableStateOf(1) }
     var currentHole by remember {
         mutableStateOf(
@@ -268,6 +269,13 @@ fun RoundOfGolf(
 
     // Update current hole when golf course loads or hole number changes
     LaunchedEffect(currentHoleNumber) {
+        // Track hole changed event (only if it doesn't already exist for this hole)
+        trackHoleChangedEventUseCase.execute(
+            roundId = currentScoreCard.roundId,
+            playerId = currentPlayer.id,
+            holeNumber = currentHoleNumber
+        )
+
         golfCourse.holes.find { it.id == currentHoleNumber }?.let { hole ->
             currentHole = hole
             targetLocation = hole.initialTarget
@@ -301,8 +309,12 @@ fun RoundOfGolf(
                     showFullScoreCard = true
                 }
                 RoundOfGolfUiEvent.NextHoleClicked -> {
-                    //TODO: Check if Current Hole Finished
-                    navigateToNextHole()
+                    val currentHoleScore = currentScoreCard.getHoleScore(currentHoleNumber)
+                    if(currentHoleScore == null && !showHoleStats){
+                        showHoleStats = true
+                    }else {
+                        navigateToNextHole()
+                    }
                     resetUITimer()
                 }
                 RoundOfGolfUiEvent.PreviousHoleClicked -> {
@@ -328,7 +340,7 @@ fun RoundOfGolf(
                 }
                 is RoundOfGolfUiEvent.UserLocationUpdated -> {
                     trackEventUseCase.execute(
-                        event = RoundOfGolfEvent.LocationUpdated(location = event.location),
+                        event = LocationUpdated(location = event.location),
                         roundId = currentScoreCard.roundId,
                         playerId = currentPlayer.id
                     )

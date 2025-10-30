@@ -1,6 +1,7 @@
 package com.example.round_of_golf_domain.data.repository
 
 import com.example.round_of_golf_domain.data.dao.RoundOfGolfEventDao
+import com.example.round_of_golf_domain.data.entity.RoundOfGolfEventEntity
 import com.example.round_of_golf_domain.data.model.RoundOfGolfEvent
 import com.example.round_of_golf_domain.data.model.toEntity
 import kotlinx.coroutines.flow.Flow
@@ -28,5 +29,13 @@ class RoundOfGolfEventLocalRepositoryImpl(
 
     override fun getAllRoundIds(): Flow<List<Long>> {
         return eventDao.getAllRoundIds()
+    }
+
+    override suspend fun hasEventOfType(roundId: Long, eventType: String): Boolean {
+        return eventDao.hasEventOfType(roundId, eventType)
+    }
+
+    override suspend fun getEventsByType(roundId: Long, eventType: String): List<RoundOfGolfEventEntity> {
+        return eventDao.getEventsByTypeSuspend(roundId, eventType)
     }
 }
