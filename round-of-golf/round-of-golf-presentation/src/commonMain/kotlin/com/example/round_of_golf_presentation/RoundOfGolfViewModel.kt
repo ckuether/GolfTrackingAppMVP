@@ -16,6 +16,7 @@ import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseC
 import com.example.round_of_golf_presentation.utils.RoundOfGolfUiEvent
 import com.example.round_of_golf_presentation.utils.TrackShotUiEvent
 import com.example.shared.data.model.Player
+import com.example.shared.data.model.parMap
 import com.example.shared.platform.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,7 +47,7 @@ class RoundOfGolfViewModel(
     private val _locationState = MutableStateFlow(LocationTrackingUiState())
     val locationState: StateFlow<LocationTrackingUiState> = _locationState.asStateFlow()
 
-    private val _currentScoreCard = MutableStateFlow(ScoreCard())
+    private val _currentScoreCard = MutableStateFlow(ScoreCard(courseName = course.name, coursePar = course.parMap))
     val currentScoreCard: StateFlow<ScoreCard> = _currentScoreCard.asStateFlow()
 
     private val roundId: Long get() = _currentScoreCard.value.roundId
@@ -258,7 +259,9 @@ class RoundOfGolfViewModel(
 
     fun getCompletedHolesPar(): Int {
         val completedHoles = _currentScoreCard.value.scorecard.keys
-        return course.holes.filter { it.id in completedHoles }.sumOf { it.par }
+        return completedHoles.mapNotNull { holeNumber -> 
+            course.holes[holeNumber]?.par 
+        }.sum()
     }
 
     fun getScoreToPar(): String {

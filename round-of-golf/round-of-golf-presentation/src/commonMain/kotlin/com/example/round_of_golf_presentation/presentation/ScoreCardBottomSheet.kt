@@ -30,9 +30,9 @@ import com.example.core_ui.utils.UiText
 
 @Composable
 fun ScoreCardBottomSheet(
-    course: Course?,
-    currentPlayer: Player?,
-    currentScoreCard: ScoreCard?,
+    course: Course,
+    currentPlayer: Player,
+    currentScoreCard: ScoreCard,
     onDismiss: () -> Unit
 ) {
     DraggableBottomSheetWrapper(
@@ -49,9 +49,9 @@ fun ScoreCardBottomSheet(
 
 @Composable
 private fun ScoreCardContent(
-    course: Course?,
-    currentPlayer: Player?,
-    currentScoreCard: ScoreCard?
+    course: Course,
+    currentPlayer: Player,
+    currentScoreCard: ScoreCard
 ) {
     val dimensions = LocalDimensionResources.current
     
@@ -70,7 +70,7 @@ private fun ScoreCardContent(
                         .padding(top = dimensions.paddingMedium)
                 ) {
                     Text(
-                        text = course?.name ?: UiText.StringResourceId(StringResources.golfCourseFallback).asString(),
+                        text = course.name,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black,
@@ -101,21 +101,9 @@ private fun ScoreCardContent(
                         modifier = Modifier.padding(dimensions.paddingLarge)
                     ) {
                         val scrollState = rememberScrollState()
-                        val allHoles = course?.holes ?: (1..18).map { null }
-                        
-                        // Calculate total par
-                        var totalPar = 0
-                        allHoles.forEach { hole ->
-                            val par = hole?.par ?: 4
-                            totalPar += par
-                        }
-                        
-                        // Calculate total score
-                        var totalScore = 0
-                        (1..allHoles.size).forEach { holeNumber ->
-                            val score = currentScoreCard?.scorecard?.get(holeNumber)
-                            if (score != null) totalScore += score
-                        }
+                        val allHoles = course.holes
+                        val totalPar = currentScoreCard.totalPar
+                        val totalScore = currentScoreCard.totalScore
                         
                         // Table Header
                         Row(modifier = Modifier.fillMaxWidth()) {
@@ -137,9 +125,9 @@ private fun ScoreCardContent(
                                 horizontalArrangement = Arrangement.spacedBy(dimensions.paddingMedium)
                             ) {
                                 // Hole numbers
-                                allHoles.forEachIndexed { index, _ ->
+                                allHoles.keys.sorted().forEach { holeNumber ->
                                     Text(
-                                        text = (index + 1).toString(),
+                                        text = holeNumber.toString(),
                                         modifier = Modifier.width(45.dp),
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = FontWeight.Bold,
@@ -182,8 +170,8 @@ private fun ScoreCardContent(
                                 horizontalArrangement = Arrangement.spacedBy(dimensions.paddingMedium)
                             ) {
                                 // Par values
-                                allHoles.forEach { hole ->
-                                    val par = hole?.par ?: 4
+                                allHoles.keys.sorted().forEach { holeNumber ->
+                                    val par = allHoles[holeNumber]!!.par
                                     Text(
                                         text = par.toString(),
                                         modifier = Modifier.width(45.dp),
@@ -206,50 +194,47 @@ private fun ScoreCardContent(
                         }
 
                         // Player score row
-                        currentPlayer?.let { player ->
-                            Spacer(modifier = Modifier.height(dimensions.paddingMedium))
+                        Spacer(modifier = Modifier.height(dimensions.paddingMedium))
+                        
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            // Fixed column
+                            Text(
+                                text = currentPlayer.name.take(8), // Truncate long names
+                                modifier = Modifier.width(60.dp),
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center,
+                                color = Color.Black,
+                                maxLines = 1
+                            )
                             
-                            Row(modifier = Modifier.fillMaxWidth()) {
-                                // Fixed column
-                                Text(
-                                    text = player.name.take(8), // Truncate long names
-                                    modifier = Modifier.width(60.dp),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    textAlign = TextAlign.Center,
-                                    color = Color.Black,
-                                    maxLines = 1
-                                )
-                                
-                                // Scrollable columns
-                                Row(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .horizontalScroll(scrollState),
-                                    horizontalArrangement = Arrangement.spacedBy(dimensions.paddingMedium)
-                                ) {
-                                    // Player scores
-                                    allHoles.forEachIndexed { index, _ ->
-                                        val holeNumber = index + 1
-                                        val score = currentScoreCard?.scorecard?.get(holeNumber)
-                                        Text(
-                                            text = score?.toString() ?: "-",
-                                            modifier = Modifier.width(45.dp),
-                                            style = MaterialTheme.typography.titleMedium,
-                                            textAlign = TextAlign.Center,
-                                            color = Color.Black
-                                        )
-                                    }
-                                    
-                                    // Total score
+                            // Scrollable columns
+                            Row(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .horizontalScroll(scrollState),
+                                horizontalArrangement = Arrangement.spacedBy(dimensions.paddingMedium)
+                            ) {
+                                // Player scores
+                                allHoles.keys.sorted().forEach { holeNumber ->
+                                    val score = currentScoreCard.scorecard[holeNumber]
                                     Text(
-                                        text = if (totalScore > 0) totalScore.toString() else "-",
-                                        modifier = Modifier.width(60.dp),
+                                        text = score?.toString() ?: "-",
+                                        modifier = Modifier.width(45.dp),
                                         style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
                                         textAlign = TextAlign.Center,
                                         color = Color.Black
                                     )
                                 }
+                                
+                                // Total score
+                                Text(
+                                    text = if (totalScore > 0) totalScore.toString() else "-",
+                                    modifier = Modifier.width(60.dp),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    color = Color.Black
+                                )
                             }
                         }
                     }

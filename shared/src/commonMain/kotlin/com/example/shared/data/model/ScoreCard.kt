@@ -7,9 +7,10 @@ import kotlin.random.Random
 @Serializable
 data class ScoreCard(
     val roundId: Long = Random.nextLong(1000000L, 9999999L),
+    val playerId: Long = 0L,
     val courseId: Long = 0L,
     val courseName: String = "",
-    val playerId: Long = 0L,
+    val coursePar: Map<Int, Int> = mapOf(),
     val scorecard: Map<Int, Int?> = mapOf(),
     val roundInProgress: Boolean = true,
     val createdTimestamp: Long = getCurrentTimeMillis(),
@@ -23,18 +24,32 @@ data class ScoreCard(
     
     val scores: List<Int>
         get() = scorecard.values.filterNotNull()
+
+    val totalPar: Int
+        get() = coursePar.values.sum()
     
+    val completedHolesPar: Int
+        get() = scorecard.keys.mapNotNull { holeNumber -> 
+            coursePar[holeNumber] 
+        }.sum()
+
     val pars: Int
-        get() = scores.count { it == 4 } // Assuming par 4 for simplicity
+        get() = scorecard.count { (holeNumber, score) ->
+            score != null && coursePar[holeNumber] == score
+        }
     
     val birdies: Int
-        get() = scores.count { it == 3 } // Assuming par 4, so 3 is birdie
+        get() = scorecard.count { (holeNumber, score) ->
+            score != null && coursePar[holeNumber]?.let { par -> score == par - 1 } == true
+        }
     
     val bogeys: Int
-        get() = scores.count { it == 5 } // Assuming par 4, so 5 is bogey
+        get() = scorecard.count { (holeNumber, score) ->
+            score != null && coursePar[holeNumber]?.let { par -> score == par + 1 } == true
+        }
     
     val toPar: Int
-        get() = totalScore - (holesPlayed * 4) // Assuming all holes are par 4
+        get() = totalScore - completedHolesPar
 
     fun getHoleScore(holeNumber: Int): Int?{
         return scorecard[holeNumber]
