@@ -29,7 +29,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
@@ -50,6 +49,7 @@ import com.example.core_ui.utils.UiText
 import com.example.location_domain.domain.model.ScreenPoint
 import com.example.location_domain.domain.service.MapProjectionService
 import com.example.round_of_golf_domain.data.model.LocationUpdated
+import com.example.round_of_golf_domain.data.model.ShotTracked
 import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseCase
 import com.example.round_of_golf_domain.domain.usecase.TrackHoleChangedEventUseCase
 import com.example.round_of_golf_presentation.presentation.components.DraggableMarker
@@ -92,7 +92,6 @@ fun RoundOfGolf(
 ) {
     val density = LocalDensity.current
     val dimensions = LocalDimensionResources.current
-    val coroutineScope = rememberCoroutineScope()
 
     val mapProjectionService: MapProjectionService = koinInject()
     val trackEventUseCase: TrackSingleRoundEventUseCase = koinInject()
@@ -105,17 +104,29 @@ fun RoundOfGolf(
     var currentHoleNumber by remember { mutableStateOf(1) }
     var currentHole by remember {
         mutableStateOf(
-            golfCourse.holes.find { it.id == currentHoleNumber }
-                ?: golfCourse.holes.first()
+            golfCourse.holes[currentHoleNumber]
+                ?: golfCourse.holes.values.first()
         )
     }
 
     // We'll use Google Maps projection directly instead of injected use case
     var googleMapInstance by remember { mutableStateOf<Any?>(null) }
     var mapSize by remember { mutableStateOf<IntSize?>(null) }
+
+    var currentBallLocation by remember { mutableStateOf(currentHole.teeLocation) }
+
     var cameraPosition by remember {
-        val teeLocation = currentHole.teeLocation
-        mutableStateOf(MapCameraPosition(teeLocation.lat, teeLocation.long, 15f))
+        mutableStateOf(MapCameraPosition(currentBallLocation.lat, currentBallLocation.long, 15f))
+    }
+
+    LaunchedEffect(currentBallLocation) {
+        // Animate camera to new ball position with appropriate zoom
+        println("DEBUG: currentBallLocation changed to: lat=${currentBallLocation.lat}, lng=${currentBallLocation.long}")
+        cameraPosition = MapCameraPosition(
+            latitude = currentBallLocation.lat,
+            longitude = currentBallLocation.long,
+            zoom = 16f // Closer zoom when following ball location
+        )
     }
 
     var trackShotModeEnabled by remember { mutableStateOf(false) }
@@ -237,7 +248,6 @@ fun RoundOfGolf(
         margin = 16
     )
 
-
     var showClubSelection by remember { mutableStateOf(false) }
     var showHoleStats by remember { mutableStateOf(false) }
     var showFullScoreCard by remember { mutableStateOf(false) }
@@ -276,9 +286,10 @@ fun RoundOfGolf(
             holeNumber = currentHoleNumber
         )
 
-        golfCourse.holes.find { it.id == currentHoleNumber }?.let { hole ->
+        golfCourse.holes[currentHoleNumber]?.let { hole ->
             currentHole = hole
             targetLocation = hole.initialTarget
+            currentBallLocation = hole.teeLocation
         }
     }
 
@@ -373,8 +384,30 @@ fun RoundOfGolf(
                     selectedClub = event.selectedClub
                 }
                 TrackShotUiEvent.TrackShotCardClicked -> {
-                    //TODO: Store Tracked Shot in DB
-                    updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString("Do something")))
+                    if(selectedClub == null){
+                        showClubSelection = true
+                        return@let
+                    }
+
+                    val shotTrackedEvent = ShotTracked(
+                        holeNumber = currentHoleNumber,
+                        club = selectedClub!!,
+                        location = trackShotEndLocation
+                    )
+
+                    trackEventUseCase.execute(
+                        event = shotTrackedEvent,
+                        roundId = currentScoreCard.roundId,
+                        playerId = currentPlayer.id
+                    )
+
+                    println("DEBUG: About to update currentBallLocation from ${currentBallLocation.lat},${currentBallLocation.long} to ${trackShotEndLocation.lat},${trackShotEndLocation.long}")
+                    currentBallLocation = trackShotEndLocation
+                    println("DEBUG: currentBallLocation updated successfully")
+
+                    updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString("Shot Saved")))
+                    showClubSelection = false
+                    trackShotModeEnabled = false
                     resetUITimer()
                 }
                 TrackShotUiEvent.ClubSelectionButtonClicked -> {
@@ -421,8 +454,10 @@ fun RoundOfGolf(
                 mapSize = IntSize(width, height)
             },
             onCameraPositionChanged = { newCameraPosition ->
+                println("DEBUG: Map camera position changed: lat=${newCameraPosition.latitude}, lng=${newCameraPosition.longitude}, zoom=${newCameraPosition.zoom}")
                 cameraPosition = newCameraPosition
             },
+            currentBallLocation = currentBallLocation,
             onMapReady = { mapInstance ->
                 googleMapInstance = mapInstance
             }
