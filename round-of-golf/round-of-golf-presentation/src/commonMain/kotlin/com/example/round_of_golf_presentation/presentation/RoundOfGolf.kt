@@ -402,7 +402,9 @@ fun RoundOfGolf(
                     )
 
                     currentBallLocation = trackShotEndLocation
+                    trackShotStartLocation = trackShotEndLocation
                     targetLocation = currentHole.flagLocation
+                    trackShotEndLocation = targetLocation
 
                     showClubSelection = false
                     trackShotModeEnabled = false
