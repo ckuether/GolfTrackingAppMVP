@@ -119,15 +119,6 @@ fun RoundOfGolf(
         mutableStateOf(MapCameraPosition(currentBallLocation.lat, currentBallLocation.long, 15f))
     }
 
-    LaunchedEffect(currentBallLocation) {
-        // Animate camera to new ball position with appropriate zoom
-        println("DEBUG: currentBallLocation changed to: lat=${currentBallLocation.lat}, lng=${currentBallLocation.long}")
-        cameraPosition = MapCameraPosition(
-            latitude = currentBallLocation.lat,
-            longitude = currentBallLocation.long,
-            zoom = 16f // Closer zoom when following ball location
-        )
-    }
 
     var trackShotModeEnabled by remember { mutableStateOf(false) }
     var selectedClub by remember { mutableStateOf<GolfClubType?>(null) }
@@ -136,7 +127,7 @@ fun RoundOfGolf(
 
     // Calculate yardage display positions using helper function
     val yardageToTargetScreenPosition = rememberYardageScreenPosition(
-        location1 = currentHole.teeLocation,
+        location1 = currentBallLocation,
         location2 = targetLocation,
         googleMapInstance = googleMapInstance,
         mapSize = mapSize,
@@ -145,9 +136,9 @@ fun RoundOfGolf(
         margin = 60
     )
 
-    val yardageToTargetText by remember(currentHole, targetLocation) {
+    val yardageToTargetText by remember(currentBallLocation, targetLocation) {
         derivedStateOf {
-            currentHole.teeLocation.distanceToInYards(targetLocation)
+            currentBallLocation.distanceToInYards(targetLocation)
         }
     }
 
@@ -186,6 +177,15 @@ fun RoundOfGolf(
         margin = 16
     )
 
+    val ballMarkerScreenPosition = rememberMarkerScreenPosition(
+        location = currentBallLocation,
+        googleMapInstance = googleMapInstance,
+        mapSize = mapSize,
+        cameraPosition = cameraPosition,
+        mapProjectionService = mapProjectionService,
+        margin = 16
+    )
+
     val targetMarkerScreenPosition = rememberMarkerScreenPosition(
         location = targetLocation,
         googleMapInstance = googleMapInstance,
@@ -196,8 +196,8 @@ fun RoundOfGolf(
     )
 
     // Calculate polyline points using helper function
-    val teeToTargetPolylinePoints = rememberPolylinePoints(
-        location1 = currentHole.teeLocation,
+    val ballToTargetPolylinePoints = rememberPolylinePoints(
+        location1 = currentBallLocation,
         location2 = targetLocation,
         googleMapInstance = googleMapInstance,
         mapSize = mapSize,
@@ -401,11 +401,9 @@ fun RoundOfGolf(
                         playerId = currentPlayer.id
                     )
 
-                    println("DEBUG: About to update currentBallLocation from ${currentBallLocation.lat},${currentBallLocation.long} to ${trackShotEndLocation.lat},${trackShotEndLocation.long}")
                     currentBallLocation = trackShotEndLocation
-                    println("DEBUG: currentBallLocation updated successfully")
+                    targetLocation = currentHole.flagLocation
 
-                    updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString("Shot Saved")))
                     showClubSelection = false
                     trackShotModeEnabled = false
                     resetUITimer()
@@ -454,7 +452,6 @@ fun RoundOfGolf(
                 mapSize = IntSize(width, height)
             },
             onCameraPositionChanged = { newCameraPosition ->
-                println("DEBUG: Map camera position changed: lat=${newCameraPosition.latitude}, lng=${newCameraPosition.longitude}, zoom=${newCameraPosition.zoom}")
                 cameraPosition = newCameraPosition
             },
             currentBallLocation = currentBallLocation,
@@ -464,9 +461,9 @@ fun RoundOfGolf(
         )
 
         // Polylines using screen projection
-        if (!trackShotModeEnabled && teeToTargetPolylinePoints.isNotEmpty()) {
+        if (!trackShotModeEnabled && ballToTargetPolylinePoints.isNotEmpty()) {
             PolylineComponent(
-                points = teeToTargetPolylinePoints,
+                points = ballToTargetPolylinePoints,
                 modifier = Modifier.fillMaxSize(),
                 color = Color.White,
                 strokeWidth = 2f
@@ -494,7 +491,7 @@ fun RoundOfGolf(
             )
         }
 
-        if (!trackShotModeEnabled && yardageTargetToFlagScreenPosition != IntOffset.Zero) {
+        if (!trackShotModeEnabled && yardageTargetToFlagScreenPosition != IntOffset.Zero && yardageTargetToFlagText >= 10) {
             val yardageSize = YardageDisplayDefaults.getSize()
             YardageDisplay(
                 yardage = yardageTargetToFlagText,
@@ -525,6 +522,18 @@ fun RoundOfGolf(
                     .offset(
                         x = with(density) { flagMarkerScreenPosition.x.toDp() - flagSize / 2 },
                         y = with(density) { flagMarkerScreenPosition.y.toDp() - flagSize / 2 }
+                    )
+            )
+        }
+
+        // Ball location marker - only show if ball is not at tee location
+        if (ballMarkerScreenPosition != IntOffset.Zero && currentBallLocation != currentHole.teeLocation) {
+            val flagSize = FlagMarkerDefaults.getSize()
+            FlagMarker(
+                modifier = Modifier
+                    .offset(
+                        x = with(density) { ballMarkerScreenPosition.x.toDp() - flagSize / 2 },
+                        y = with(density) { ballMarkerScreenPosition.y.toDp() - flagSize / 2 }
                     )
             )
         }
