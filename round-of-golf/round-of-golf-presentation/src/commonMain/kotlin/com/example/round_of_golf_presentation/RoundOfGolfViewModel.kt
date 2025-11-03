@@ -15,6 +15,7 @@ import com.example.round_of_golf_domain.domain.usecase.SaveScoreCardUseCase
 import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseCase
 import com.example.round_of_golf_presentation.utils.RoundOfGolfUiEvent
 import com.example.round_of_golf_presentation.utils.TrackShotUiEvent
+import com.example.shared.data.model.HoleStats
 import com.example.shared.data.model.Player
 import com.example.shared.data.model.parMap
 import com.example.shared.platform.Logger
@@ -47,8 +48,11 @@ class RoundOfGolfViewModel(
     private val _locationState = MutableStateFlow(LocationTrackingUiState())
     val locationState: StateFlow<LocationTrackingUiState> = _locationState.asStateFlow()
 
-    private val _currentScoreCard = MutableStateFlow(ScoreCard(courseName = course.name, coursePar = course.parMap))
+    private val _currentScoreCard = MutableStateFlow(ScoreCard(courseName = course.name, courseParMap = course.parMap))
     val currentScoreCard: StateFlow<ScoreCard> = _currentScoreCard.asStateFlow()
+
+    val scoreCard: ScoreCard
+        get() = currentScoreCard.value
 
     private val roundId: Long get() = _currentScoreCard.value.roundId
 
@@ -222,13 +226,18 @@ class RoundOfGolfViewModel(
         }
     }
 
-    fun saveHoleScore(holeNumber: Int, score: Int) {
-        val currentCard = _currentScoreCard.value
-        val updatedScorecard = currentCard.scorecard.toMutableMap()
-        updatedScorecard[holeNumber] = score
+    fun getHoleScore(holeNumber: Int): Int?{
+        return scoreCard.getHoleScore(holeNumber)
+    }
 
-        val updatedCard = currentCard.copy(
-            scorecard = updatedScorecard,
+    fun saveHoleScore(holeNumber: Int, score: Int, putts: Int?) {
+        val holeStats = scoreCard.holeStatsMap.toMutableMap()
+        val currentHole = holeStats.getOrPut(holeNumber) { HoleStats() }
+        currentHole.score = score
+        currentHole.putts = putts
+
+        val updatedCard = scoreCard.copy(
+            holeStatsMap = holeStats,
             lastUpdatedTimestamp = getCurrentTimeMillis()
         )
         _currentScoreCard.value = updatedCard
@@ -248,24 +257,15 @@ class RoundOfGolfViewModel(
             )
         }
     }
-
-    fun getHoleScore(holeNumber: Int): Int? {
-        return _currentScoreCard.value.scorecard[holeNumber]
-    }
-
-    fun getTotalScore(): Int {
-        return _currentScoreCard.value.scorecard.values.filterNotNull().sum()
-    }
-
     fun getCompletedHolesPar(): Int {
-        val completedHoles = _currentScoreCard.value.scorecard.keys
+        val completedHoles = _currentScoreCard.value.holeStatsMap.keys
         return completedHoles.mapNotNull { holeNumber -> 
             course.holes[holeNumber]?.par 
         }.sum()
     }
 
     fun getScoreToPar(): String {
-        val totalScore = getTotalScore()
+        val totalScore = scoreCard.totalScore
         val completedPar = getCompletedHolesPar()
 
         return if (totalScore > 0 && completedPar > 0) {

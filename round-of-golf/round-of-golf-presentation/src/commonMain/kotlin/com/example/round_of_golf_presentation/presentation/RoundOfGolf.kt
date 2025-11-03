@@ -355,16 +355,14 @@ fun RoundOfGolf(
                         roundId = currentScoreCard.roundId,
                         playerId = currentPlayer.id
                     )
-                    updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString(event.location.toString())))
                 }
                 is RoundOfGolfUiEvent.TargetLocationUpdated -> {
                     targetLocation = event.location
                 }
                 is RoundOfGolfUiEvent.OnFinishHole -> {
                     val score = event.score
-                    //TODO: Do something with putts
                     val putts = event.putts
-                    viewModel.saveHoleScore(currentHoleNumber, score)
+                    viewModel.saveHoleScore(currentHoleNumber, score, putts)
                     navigateToNextHole()
                 }
                 RoundOfGolfUiEvent.OnFinishRound -> {

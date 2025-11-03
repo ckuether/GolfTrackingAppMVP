@@ -2,6 +2,7 @@ package com.example.shared.data.model
 
 import com.example.shared.platform.getCurrentTimeMillis
 import kotlinx.serialization.Serializable
+import kotlin.collections.component2
 import kotlin.random.Random
 
 @Serializable
@@ -10,48 +11,49 @@ data class ScoreCard(
     val playerId: Long = 0L,
     val courseId: Long = 0L,
     val courseName: String = "",
-    val coursePar: Map<Int, Int> = mapOf(),
-    val scorecard: Map<Int, Int?> = mapOf(),
+    val courseParMap: Map<Int, Int> = mapOf(),
+    val holeStatsMap: Map<Int, HoleStats> = mapOf(),
     val roundInProgress: Boolean = true,
     val createdTimestamp: Long = getCurrentTimeMillis(),
     val lastUpdatedTimestamp: Long = getCurrentTimeMillis()
 ) {
-    val totalScore: Int
-        get() = scorecard.values.filterNotNull().sum()
     
     val holesPlayed: Int
-        get() = scorecard.size
-    
-    val scores: List<Int>
-        get() = scorecard.values.filterNotNull()
+        get() = holeStatsMap.size
+
+    val scores: Map<Int, Int?>
+        get() = holeStatsMap.mapValues { it.value.score }
 
     val totalPar: Int
-        get() = coursePar.values.sum()
+        get() = courseParMap.values.sum()
     
     val completedHolesPar: Int
-        get() = scorecard.keys.mapNotNull { holeNumber -> 
-            coursePar[holeNumber] 
+        get() = holeStatsMap.keys.mapNotNull { holeNumber ->
+            courseParMap[holeNumber]
         }.sum()
 
     val pars: Int
-        get() = scorecard.count { (holeNumber, score) ->
-            score != null && coursePar[holeNumber] == score
+        get() = holeStatsMap.count { (holeNumber, holeStats) ->
+            holeStats.score != null && courseParMap[holeNumber] == holeStats.score
         }
     
     val birdies: Int
-        get() = scorecard.count { (holeNumber, score) ->
-            score != null && coursePar[holeNumber]?.let { par -> score == par - 1 } == true
+        get() = holeStatsMap.count { (holeNumber, holeStats) ->
+            holeStats.score != null && courseParMap[holeNumber]?.let { par -> holeStats.score == par - 1 } == true
         }
     
     val bogeys: Int
-        get() = scorecard.count { (holeNumber, score) ->
-            score != null && coursePar[holeNumber]?.let { par -> score == par + 1 } == true
+        get() = holeStatsMap.count { (holeNumber, holeStats) ->
+            courseParMap[holeNumber]?.let { par -> holeStats.score == par + 1 } == true
         }
     
     val toPar: Int
         get() = totalScore - completedHolesPar
 
-    fun getHoleScore(holeNumber: Int): Int?{
-        return scorecard[holeNumber]
+    val totalScore: Int
+        get() = scores.values.filterNotNull().sum()
+
+    fun getHoleScore(holeNumber: Int): Int? {
+        return holeStatsMap[holeNumber]?.score
     }
 }
