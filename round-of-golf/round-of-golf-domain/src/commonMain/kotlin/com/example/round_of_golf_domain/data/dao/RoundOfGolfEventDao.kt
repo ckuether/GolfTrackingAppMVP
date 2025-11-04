@@ -22,11 +22,11 @@ interface RoundOfGolfEventDao {
     @Query("SELECT * FROM round_of_golf_events WHERE roundId = :roundId ORDER BY timestamp ASC")
     suspend fun getEventsForRoundSuspend(roundId: Long): List<RoundOfGolfEventEntity>
 
-    @Query("SELECT * FROM round_of_golf_events WHERE roundId = :roundId AND holeNumber = :holeNumber ORDER BY timestamp ASC")
-    fun getEventsForHole(roundId: Long, holeNumber: Int): Flow<List<RoundOfGolfEventEntity>>
-
     @Query("SELECT * FROM round_of_golf_events WHERE roundId = :roundId AND eventType = :eventType ORDER BY timestamp ASC")
     fun getEventsByType(roundId: Long, eventType: String): Flow<List<RoundOfGolfEventEntity>>
+
+    @Query("SELECT * FROM round_of_golf_events WHERE roundId = :roundId AND eventType = :eventType ORDER BY timestamp ASC")
+    suspend fun getEventsByTypeSuspend(roundId: Long, eventType: String): List<RoundOfGolfEventEntity>
 
     @Query("SELECT * FROM round_of_golf_events WHERE roundId = :roundId AND timestamp BETWEEN :startTime AND :endTime ORDER BY timestamp ASC")
     fun getEventsByTimeRange(roundId: Long, startTime: Long, endTime: Long): Flow<List<RoundOfGolfEventEntity>>
@@ -39,4 +39,7 @@ interface RoundOfGolfEventDao {
 
     @Query("SELECT DISTINCT roundId FROM round_of_golf_events ORDER BY roundId DESC")
     fun getAllRoundIds(): Flow<List<Long>>
+
+    @Query("SELECT COUNT(*) > 0 FROM round_of_golf_events WHERE roundId = :roundId AND eventType = :eventType")
+    suspend fun hasEventOfType(roundId: Long, eventType: String): Boolean
 }

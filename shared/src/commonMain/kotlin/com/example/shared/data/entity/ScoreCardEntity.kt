@@ -2,6 +2,7 @@ package com.example.shared.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.shared.data.model.HoleStats
 import com.example.shared.data.model.ScoreCard
 import kotlinx.serialization.json.Json
 
@@ -11,6 +12,7 @@ data class ScoreCardEntity(
     val roundId: Long,
     val courseId: Long,
     val courseName: String,
+    val courseParJson: String, // Serialized coursePar map
     val playerId: Long,
     val scorecardJson: String, // Serialized scorecard map
     val roundInProgress: Boolean = true,
@@ -19,13 +21,15 @@ data class ScoreCardEntity(
 )
 
 fun ScoreCardEntity.toScoreCard(): ScoreCard {
-    val scorecardMap = Json.decodeFromString<Map<Int, Int?>>(scorecardJson)
+    val scorecardMap = Json.decodeFromString<Map<Int, HoleStats>>(scorecardJson)
+    val courseParMap = Json.decodeFromString<Map<Int, Int>>(courseParJson)
     return ScoreCard(
         roundId = roundId,
+        playerId = playerId,
         courseId = courseId,
         courseName = courseName,
-        playerId = playerId,
-        scorecard = scorecardMap,
+        courseParMap = courseParMap,
+        holeStatsMap = scorecardMap,
         roundInProgress = roundInProgress,
         createdTimestamp = createdTimestamp,
         lastUpdatedTimestamp = lastUpdatedTimestamp
@@ -35,10 +39,11 @@ fun ScoreCardEntity.toScoreCard(): ScoreCard {
 fun ScoreCard.toEntity(): ScoreCardEntity {
     return ScoreCardEntity(
         roundId = roundId,
+        playerId = playerId,
         courseId = courseId,
         courseName = courseName,
-        playerId = playerId,
-        scorecardJson = Json.encodeToString(scorecard),
+        courseParJson = Json.encodeToString(courseParMap),
+        scorecardJson = Json.encodeToString(holeStatsMap),
         roundInProgress = roundInProgress,
         createdTimestamp = createdTimestamp,
         lastUpdatedTimestamp = lastUpdatedTimestamp

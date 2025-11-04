@@ -29,7 +29,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
@@ -49,7 +48,11 @@ import com.example.core_ui.utils.UiEvent
 import com.example.core_ui.utils.UiText
 import com.example.location_domain.domain.model.ScreenPoint
 import com.example.location_domain.domain.service.MapProjectionService
+import com.example.round_of_golf_domain.data.model.LocationUpdated
+import com.example.round_of_golf_domain.data.model.ShotTracked
 import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseCase
+import com.example.round_of_golf_domain.domain.usecase.TrackHoleChangedEventUseCase
+import com.example.round_of_golf_domain.domain.usecase.CheckUserLocationInHoleBoundsUseCase
 import com.example.round_of_golf_presentation.presentation.components.DraggableMarker
 import com.example.round_of_golf_presentation.presentation.components.HoleInfoCard
 import com.example.round_of_golf_presentation.presentation.components.HoleNavigationCard
@@ -90,10 +93,11 @@ fun RoundOfGolf(
 ) {
     val density = LocalDensity.current
     val dimensions = LocalDimensionResources.current
-    val coroutineScope = rememberCoroutineScope()
 
     val mapProjectionService: MapProjectionService = koinInject()
     val trackEventUseCase: TrackSingleRoundEventUseCase = koinInject()
+    val trackHoleChangedEventUseCase: TrackHoleChangedEventUseCase = koinInject()
+    val checkUserLocationInHoleBoundsUseCase: CheckUserLocationInHoleBoundsUseCase = koinInject()
     val locationState by viewModel.locationState.collectAsStateWithLifecycle()
 
     val currentScoreCard by viewModel.currentScoreCard.collectAsStateWithLifecycle()
@@ -102,18 +106,21 @@ fun RoundOfGolf(
     var currentHoleNumber by remember { mutableStateOf(1) }
     var currentHole by remember {
         mutableStateOf(
-            golfCourse.holes.find { it.id == currentHoleNumber }
-                ?: golfCourse.holes.first()
+            golfCourse.holes[currentHoleNumber]
+                ?: golfCourse.holes.values.first()
         )
     }
 
     // We'll use Google Maps projection directly instead of injected use case
     var googleMapInstance by remember { mutableStateOf<Any?>(null) }
     var mapSize by remember { mutableStateOf<IntSize?>(null) }
+
+    var currentBallLocation by remember { mutableStateOf(currentHole.teeLocation) }
+
     var cameraPosition by remember {
-        val teeLocation = currentHole.teeLocation
-        mutableStateOf(MapCameraPosition(teeLocation.lat, teeLocation.long, 15f))
+        mutableStateOf(MapCameraPosition(currentBallLocation.lat, currentBallLocation.long, 15f))
     }
+
 
     var trackShotModeEnabled by remember { mutableStateOf(false) }
     var selectedClub by remember { mutableStateOf<GolfClubType?>(null) }
@@ -122,7 +129,7 @@ fun RoundOfGolf(
 
     // Calculate yardage display positions using helper function
     val yardageToTargetScreenPosition = rememberYardageScreenPosition(
-        location1 = currentHole.teeLocation,
+        location1 = currentBallLocation,
         location2 = targetLocation,
         googleMapInstance = googleMapInstance,
         mapSize = mapSize,
@@ -131,9 +138,9 @@ fun RoundOfGolf(
         margin = 60
     )
 
-    val yardageToTargetText by remember(currentHole, targetLocation) {
+    val yardageToTargetText by remember(currentBallLocation, targetLocation) {
         derivedStateOf {
-            currentHole.teeLocation.distanceToInYards(targetLocation)
+            currentBallLocation.distanceToInYards(targetLocation)
         }
     }
 
@@ -172,6 +179,15 @@ fun RoundOfGolf(
         margin = 16
     )
 
+    val ballMarkerScreenPosition = rememberMarkerScreenPosition(
+        location = currentBallLocation,
+        googleMapInstance = googleMapInstance,
+        mapSize = mapSize,
+        cameraPosition = cameraPosition,
+        mapProjectionService = mapProjectionService,
+        margin = 16
+    )
+
     val targetMarkerScreenPosition = rememberMarkerScreenPosition(
         location = targetLocation,
         googleMapInstance = googleMapInstance,
@@ -182,8 +198,8 @@ fun RoundOfGolf(
     )
 
     // Calculate polyline points using helper function
-    val teeToTargetPolylinePoints = rememberPolylinePoints(
-        location1 = currentHole.teeLocation,
+    val ballToTargetPolylinePoints = rememberPolylinePoints(
+        location1 = currentBallLocation,
         location2 = targetLocation,
         googleMapInstance = googleMapInstance,
         mapSize = mapSize,
@@ -211,6 +227,9 @@ fun RoundOfGolf(
     // Track which component is being dragged
     var draggedComponent by remember { mutableStateOf<DraggedComponent?>(null) }
 
+    // Last known User location
+    var lastUserLocation by remember { mutableStateOf(Location(0.0,0.0)) }
+
     // Track shot mode locations (separate from hole data)
     var trackShotStartLocation by remember(currentHole) { mutableStateOf(currentHole.teeLocation) }
     var trackShotEndLocation by remember(currentHole) { mutableStateOf(currentHole.initialTarget) }
@@ -233,7 +252,6 @@ fun RoundOfGolf(
         mapProjectionService = mapProjectionService,
         margin = 16
     )
-
 
     var showClubSelection by remember { mutableStateOf(false) }
     var showHoleStats by remember { mutableStateOf(false) }
@@ -266,14 +284,19 @@ fun RoundOfGolf(
 
     // Update current hole when golf course loads or hole number changes
     LaunchedEffect(currentHoleNumber) {
-        golfCourse.holes.find { it.id == currentHoleNumber }?.let { hole ->
+        // Track hole changed event (only if it doesn't already exist for this hole)
+        trackHoleChangedEventUseCase.execute(
+            roundId = currentScoreCard.roundId,
+            playerId = currentPlayer.id,
+            holeNumber = currentHoleNumber
+        )
+
+        golfCourse.holes[currentHoleNumber]?.let { hole ->
             currentHole = hole
             targetLocation = hole.initialTarget
+            currentBallLocation = hole.teeLocation
         }
     }
-
-    // This was the last hole - finish the round
-    val roundCompletedMessage = UiText.StringResourceId(StringResources.roundCompleted).asString()
 
     fun navigateToNextHole(){
         // Navigate to next hole (equivalent to hitting next button)
@@ -281,11 +304,11 @@ fun RoundOfGolf(
         if (currentHoleNumber < maxHoles) {
             currentHoleNumber = currentHoleNumber + 1
         } else {
-            //TODO: Display Finish Round Dialog
-            updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString(roundCompletedMessage)))
+            viewModel.updateRoundOfGolfUiEvent(RoundOfGolfUiEvent.OnFinishRound)
         }
     }
 
+    val roundCompletedMessage = UiText.StringResourceId(StringResources.roundCompleted).asString()
     val roundOfGolfUiEvent by viewModel.roundOfGolfUiEvent.collectAsStateWithLifecycle()
 
     //Handle RoundOfGolfUiEvents
@@ -299,7 +322,12 @@ fun RoundOfGolf(
                     showFullScoreCard = true
                 }
                 RoundOfGolfUiEvent.NextHoleClicked -> {
-                    navigateToNextHole()
+                    val currentHoleScore = currentScoreCard.getHoleScore(currentHoleNumber)
+                    if(currentHoleScore == null && !showHoleStats){
+                        showHoleStats = true
+                    }else {
+                        navigateToNextHole()
+                    }
                     resetUITimer()
                 }
                 RoundOfGolfUiEvent.PreviousHoleClicked -> {
@@ -313,6 +341,9 @@ fun RoundOfGolf(
                     resetUITimer()
                 }
                 RoundOfGolfUiEvent.TrackShotClicked -> {
+                    if(checkUserLocationInHoleBoundsUseCase(lastUserLocation, currentHole)){
+                        trackShotEndLocation = lastUserLocation
+                    }
                     trackShotModeEnabled = true
                     showClubSelection = true
                     resetUITimer()
@@ -324,26 +355,25 @@ fun RoundOfGolf(
                     resetUITimer()
                 }
                 is RoundOfGolfUiEvent.UserLocationUpdated -> {
-                    val location = event.location
-                    //TODO: Do Something
+                    trackEventUseCase.execute(
+                        event = LocationUpdated(location = event.location),
+                        roundId = currentScoreCard.roundId,
+                        playerId = currentPlayer.id
+                    )
+                    lastUserLocation = event.location
                 }
                 is RoundOfGolfUiEvent.TargetLocationUpdated -> {
                     targetLocation = event.location
                 }
                 is RoundOfGolfUiEvent.OnFinishHole -> {
                     val score = event.score
-                    //TODO: Do something with putts
                     val putts = event.putts
-
-
-                    //TODO: Add to Event To Database
-                    // Handle score submission
-                    viewModel.saveHoleScore(currentHoleNumber, score)
+                    viewModel.saveHoleScore(currentHoleNumber, score, putts)
                     navigateToNextHole()
-
                 }
                 RoundOfGolfUiEvent.OnFinishRound -> {
                     //TODO: Do something
+                    updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString(roundCompletedMessage)))
                 }
             }
             viewModel.clearRoundOfGolfUiEvent()
@@ -359,8 +389,30 @@ fun RoundOfGolf(
                     selectedClub = event.selectedClub
                 }
                 TrackShotUiEvent.TrackShotCardClicked -> {
-                    //TODO: Store Tracked Shot in DB
-                    updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString("Do something")))
+                    if(selectedClub == null){
+                        showClubSelection = true
+                        return@let
+                    }
+
+                    val shotTrackedEvent = ShotTracked(
+                        holeNumber = currentHoleNumber,
+                        club = selectedClub!!,
+                        location = trackShotEndLocation
+                    )
+
+                    trackEventUseCase.execute(
+                        event = shotTrackedEvent,
+                        roundId = currentScoreCard.roundId,
+                        playerId = currentPlayer.id
+                    )
+
+                    currentBallLocation = trackShotEndLocation
+                    trackShotStartLocation = trackShotEndLocation
+                    targetLocation = currentHole.flagLocation
+                    trackShotEndLocation = targetLocation
+
+                    showClubSelection = false
+                    trackShotModeEnabled = false
                     resetUITimer()
                 }
                 TrackShotUiEvent.ClubSelectionButtonClicked -> {
@@ -409,15 +461,16 @@ fun RoundOfGolf(
             onCameraPositionChanged = { newCameraPosition ->
                 cameraPosition = newCameraPosition
             },
+            currentBallLocation = currentBallLocation,
             onMapReady = { mapInstance ->
                 googleMapInstance = mapInstance
             }
         )
 
         // Polylines using screen projection
-        if (!trackShotModeEnabled && teeToTargetPolylinePoints.isNotEmpty()) {
+        if (!trackShotModeEnabled && ballToTargetPolylinePoints.isNotEmpty()) {
             PolylineComponent(
-                points = teeToTargetPolylinePoints,
+                points = ballToTargetPolylinePoints,
                 modifier = Modifier.fillMaxSize(),
                 color = Color.White,
                 strokeWidth = 2f
@@ -445,7 +498,7 @@ fun RoundOfGolf(
             )
         }
 
-        if (!trackShotModeEnabled && yardageTargetToFlagScreenPosition != IntOffset.Zero) {
+        if (!trackShotModeEnabled && yardageTargetToFlagScreenPosition != IntOffset.Zero && yardageTargetToFlagText >= 10) {
             val yardageSize = YardageDisplayDefaults.getSize()
             YardageDisplay(
                 yardage = yardageTargetToFlagText,
@@ -476,6 +529,18 @@ fun RoundOfGolf(
                     .offset(
                         x = with(density) { flagMarkerScreenPosition.x.toDp() - flagSize / 2 },
                         y = with(density) { flagMarkerScreenPosition.y.toDp() - flagSize / 2 }
+                    )
+            )
+        }
+
+        // Ball location marker - only show if ball is not at tee location
+        if (ballMarkerScreenPosition != IntOffset.Zero && currentBallLocation != currentHole.teeLocation) {
+            val flagSize = FlagMarkerDefaults.getSize()
+            FlagMarker(
+                modifier = Modifier
+                    .offset(
+                        x = with(density) { ballMarkerScreenPosition.x.toDp() - flagSize / 2 },
+                        y = with(density) { ballMarkerScreenPosition.y.toDp() - flagSize / 2 }
                     )
             )
         }

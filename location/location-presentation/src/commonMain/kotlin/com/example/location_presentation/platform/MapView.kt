@@ -11,6 +11,7 @@ expect fun MapView(
     currentHole: Hole?,
     hasLocationPermission: Boolean,
     gesturesEnabled: Boolean = true,
+    currentBallLocation: Location,
     onMapClick: ((Location) -> Unit)? = null,
     onMapSizeChanged: ((width: Int, height: Int) -> Unit)? = null,
     onCameraPositionChanged: ((MapCameraPosition) -> Unit)? = null,

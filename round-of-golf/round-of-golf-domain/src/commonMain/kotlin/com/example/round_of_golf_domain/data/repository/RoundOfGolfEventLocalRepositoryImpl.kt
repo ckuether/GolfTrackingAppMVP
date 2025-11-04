@@ -1,21 +1,21 @@
 package com.example.round_of_golf_domain.data.repository
 
 import com.example.round_of_golf_domain.data.dao.RoundOfGolfEventDao
+import com.example.round_of_golf_domain.data.entity.RoundOfGolfEventEntity
 import com.example.round_of_golf_domain.data.model.RoundOfGolfEvent
 import com.example.round_of_golf_domain.data.model.toEntity
 import kotlinx.coroutines.flow.Flow
 
-class RoundOfGolfEventRepositoryImpl(
+class RoundOfGolfEventLocalRepositoryImpl(
     private val eventDao: RoundOfGolfEventDao
-) : RoundOfGolfEventRepository {
+) : RoundOfGolfEventLocalRepository {
 
     override suspend fun insertEvent(
         event: RoundOfGolfEvent,
         roundId: Long,
         playerId: Long,
-        holeNumber: Int?
     ) {
-        val eventEntity = event.toEntity(roundId = roundId, playerId = playerId, holeNumber = holeNumber)
+        val eventEntity = event.toEntity(roundId = roundId, playerId = playerId)
         eventDao.insertEvent(eventEntity)
     }
 
@@ -29,5 +29,13 @@ class RoundOfGolfEventRepositoryImpl(
 
     override fun getAllRoundIds(): Flow<List<Long>> {
         return eventDao.getAllRoundIds()
+    }
+
+    override suspend fun hasEventOfType(roundId: Long, eventType: String): Boolean {
+        return eventDao.hasEventOfType(roundId, eventType)
+    }
+
+    override suspend fun getEventsByType(roundId: Long, eventType: String): List<RoundOfGolfEventEntity> {
+        return eventDao.getEventsByTypeSuspend(roundId, eventType)
     }
 }

@@ -27,6 +27,7 @@ actual fun MapView(
     currentHole: Hole?,
     hasLocationPermission: Boolean,
     gesturesEnabled: Boolean,
+    currentBallLocation: Location,
     onMapClick: ((Location) -> Unit)?,
     onMapSizeChanged: ((width: Int, height: Int) -> Unit)?,
     onCameraPositionChanged: ((MapCameraPosition) -> Unit)?,
@@ -50,17 +51,17 @@ actual fun MapView(
         }
     }
 
-    // Handle camera updates when hole changes
-    LaunchedEffect(currentHole) {
+    // Handle camera updates when hole or ball location changes
+    LaunchedEffect(currentHole, currentBallLocation) {
         mapViewRef.value?.let { mapView ->
             cameraControllerRef.value?.let { cameraController ->
                 when {
                     currentHole != null -> {
-                        // Calculate camera position using shared use case
-                        val cameraPosition = calculateCameraPositionUseCase(currentHole)
+                        // Calculate camera position using current ball location and flag
+                        val cameraPosition = calculateCameraPositionUseCase(currentBallLocation, currentHole.flagLocation)
                         
                         // Apply camera positioning using platform-specific controller
-                        cameraController.applyHoleCameraPosition(currentHole, cameraPosition)
+                        cameraController.applyHoleCameraPosition(currentHole, currentBallLocation, cameraPosition)
                     }
                 }
             }

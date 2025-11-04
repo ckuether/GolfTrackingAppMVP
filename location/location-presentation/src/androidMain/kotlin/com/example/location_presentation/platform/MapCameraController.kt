@@ -1,6 +1,7 @@
 package com.example.location_presentation.platform
 
 import com.example.shared.data.model.Hole
+import com.example.shared.data.model.Location
 import com.example.shared.data.model.MapCameraPosition
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -15,11 +16,11 @@ actual class MapCameraController(
     private val cameraPositionState: CameraPositionState
 ) {
 
-    actual suspend fun applyHoleCameraPosition(hole: Hole, mapCameraPosition: MapCameraPosition) {
-        val teeLatLng = LatLng(hole.teeLocation.lat, hole.teeLocation.long)
+    actual suspend fun applyHoleCameraPosition(hole: Hole, ballLocation: Location, mapCameraPosition: MapCameraPosition) {
+        val ballLatLng = LatLng(ballLocation.lat, ballLocation.long)
         val flagLatLng = LatLng(hole.flagLocation.lat, hole.flagLocation.long)
         val bounds = LatLngBounds.builder().apply {
-            include(teeLatLng)
+            include(ballLatLng)
             include(flagLatLng)
         }.build()
 

@@ -6,6 +6,7 @@ import cocoapods.GoogleMaps.GMSCoordinateBounds
 import cocoapods.GoogleMaps.GMSMapView
 import cocoapods.GoogleMaps.animateToCameraPosition
 import com.example.shared.data.model.Hole
+import com.example.shared.data.model.Location
 import com.example.shared.data.model.MapCameraPosition
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.CoreLocation.CLLocationCoordinate2DMake
@@ -25,12 +26,12 @@ actual class MapCameraController(
         private const val MAP_PADDING = 32.0
     }
 
-    actual suspend fun applyHoleCameraPosition(hole: Hole, mapCameraPosition: MapCameraPosition) {
+    actual suspend fun applyHoleCameraPosition(hole: Hole, ballLocation: Location, mapCameraPosition: MapCameraPosition) {
         try {
-            // Create bounds similar to Android's LatLngBounds
-            val teeLoc = CLLocationCoordinate2DMake(hole.teeLocation.lat, hole.teeLocation.long)
+            // Create bounds similar to Android's LatLngBounds using ball location and flag
+            val ballLoc = CLLocationCoordinate2DMake(ballLocation.lat, ballLocation.long)
             val flagLoc = CLLocationCoordinate2DMake(hole.flagLocation.lat, hole.flagLocation.long)
-            val bounds = GMSCoordinateBounds(teeLoc, flagLoc)
+            val bounds = GMSCoordinateBounds(ballLoc, flagLoc)
 
             val insets = UIEdgeInsetsMake(MAP_PADDING_TOP, MAP_PADDING, MAP_PADDING, MAP_PADDING)
             val boundsCamera = mapView.cameraForBounds(bounds, insets)
