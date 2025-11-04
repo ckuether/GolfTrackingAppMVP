@@ -4,11 +4,13 @@ import com.example.round_of_golf_domain.data.repository.RoundOfGolfEventLocalRep
 import com.example.round_of_golf_domain.data.repository.RoundOfGolfEventLocalRepositoryImpl
 import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseCase
 import com.example.round_of_golf_domain.domain.usecase.TrackHoleChangedEventUseCase
+import com.example.round_of_golf_domain.domain.usecase.CheckUserLocationInHoleBoundsUseCase
 import org.koin.dsl.module
 val roundOfGolfDomainModule = module {
     // Use Cases - Single Responsibility Principle
     single { TrackSingleRoundEventUseCase(get()) }
     single { TrackHoleChangedEventUseCase(get()) }
+    single { CheckUserLocationInHoleBoundsUseCase() }
 
     // Repositories
     single<RoundOfGolfEventLocalRepository> {

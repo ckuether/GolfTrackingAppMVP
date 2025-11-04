@@ -52,6 +52,7 @@ import com.example.round_of_golf_domain.data.model.LocationUpdated
 import com.example.round_of_golf_domain.data.model.ShotTracked
 import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseCase
 import com.example.round_of_golf_domain.domain.usecase.TrackHoleChangedEventUseCase
+import com.example.round_of_golf_domain.domain.usecase.CheckUserLocationInHoleBoundsUseCase
 import com.example.round_of_golf_presentation.presentation.components.DraggableMarker
 import com.example.round_of_golf_presentation.presentation.components.HoleInfoCard
 import com.example.round_of_golf_presentation.presentation.components.HoleNavigationCard
@@ -96,6 +97,7 @@ fun RoundOfGolf(
     val mapProjectionService: MapProjectionService = koinInject()
     val trackEventUseCase: TrackSingleRoundEventUseCase = koinInject()
     val trackHoleChangedEventUseCase: TrackHoleChangedEventUseCase = koinInject()
+    val checkUserLocationInHoleBoundsUseCase: CheckUserLocationInHoleBoundsUseCase = koinInject()
     val locationState by viewModel.locationState.collectAsStateWithLifecycle()
 
     val currentScoreCard by viewModel.currentScoreCard.collectAsStateWithLifecycle()
@@ -225,6 +227,9 @@ fun RoundOfGolf(
     // Track which component is being dragged
     var draggedComponent by remember { mutableStateOf<DraggedComponent?>(null) }
 
+    // Last known User location
+    var lastUserLocation by remember { mutableStateOf(Location(0.0,0.0)) }
+
     // Track shot mode locations (separate from hole data)
     var trackShotStartLocation by remember(currentHole) { mutableStateOf(currentHole.teeLocation) }
     var trackShotEndLocation by remember(currentHole) { mutableStateOf(currentHole.initialTarget) }
@@ -293,20 +298,17 @@ fun RoundOfGolf(
         }
     }
 
-    // This was the last hole - finish the round
-    val roundCompletedMessage = UiText.StringResourceId(StringResources.roundCompleted).asString()
-
     fun navigateToNextHole(){
         // Navigate to next hole (equivalent to hitting next button)
         val maxHoles = golfCourse.holes.size
         if (currentHoleNumber < maxHoles) {
             currentHoleNumber = currentHoleNumber + 1
         } else {
-            //TODO: Display Finish Round Dialog
-            updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString(roundCompletedMessage)))
+            viewModel.updateRoundOfGolfUiEvent(RoundOfGolfUiEvent.OnFinishRound)
         }
     }
 
+    val roundCompletedMessage = UiText.StringResourceId(StringResources.roundCompleted).asString()
     val roundOfGolfUiEvent by viewModel.roundOfGolfUiEvent.collectAsStateWithLifecycle()
 
     //Handle RoundOfGolfUiEvents
@@ -339,6 +341,9 @@ fun RoundOfGolf(
                     resetUITimer()
                 }
                 RoundOfGolfUiEvent.TrackShotClicked -> {
+                    if(checkUserLocationInHoleBoundsUseCase(lastUserLocation, currentHole)){
+                        trackShotEndLocation = lastUserLocation
+                    }
                     trackShotModeEnabled = true
                     showClubSelection = true
                     resetUITimer()
@@ -355,6 +360,7 @@ fun RoundOfGolf(
                         roundId = currentScoreCard.roundId,
                         playerId = currentPlayer.id
                     )
+                    lastUserLocation = event.location
                 }
                 is RoundOfGolfUiEvent.TargetLocationUpdated -> {
                     targetLocation = event.location
@@ -367,6 +373,7 @@ fun RoundOfGolf(
                 }
                 RoundOfGolfUiEvent.OnFinishRound -> {
                     //TODO: Do something
+                    updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString(roundCompletedMessage)))
                 }
             }
             viewModel.clearRoundOfGolfUiEvent()
