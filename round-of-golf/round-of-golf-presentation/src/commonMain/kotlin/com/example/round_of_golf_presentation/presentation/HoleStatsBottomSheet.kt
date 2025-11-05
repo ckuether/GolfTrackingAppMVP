@@ -55,7 +55,8 @@ fun HoleStatsBottomSheet(
 ) {
     DraggableBottomSheetWrapper(
         onDismiss = onDismiss,
-        fillMaxHeight = 1.0f
+        fillMaxHeight = null,
+        dragOnlyFromHandle = true
     ) {
         HoleStats(
             currentHole = currentHole,
@@ -100,7 +101,6 @@ fun HoleStats(
         // Scrollable content
         LazyColumn(
             modifier = Modifier
-                .weight(1f)
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(dimensions.spacingMedium)
         ) {

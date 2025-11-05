@@ -25,6 +25,7 @@ import kotlin.math.roundToInt
 fun DraggableBottomSheetWrapper(
     onDismiss: () -> Unit,
     fillMaxHeight: Float? = 0.8f,
+    dragOnlyFromHandle: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val dimensions = LocalDimensionResources.current
@@ -73,38 +74,44 @@ fun DraggableBottomSheetWrapper(
                 .clip(RoundedCornerShape(topStart = dimensions.cornerRadiusXLarge, topEnd = dimensions.cornerRadiusXLarge))
                 .background(Color.White)
                 .clickable { /* Prevent click through */ }
-                .pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val down = awaitFirstDown(requireUnconsumed = false)
-                            var isDragging = false
-                            
-                            drag(down.id) { change ->
-                                val dragAmount = change.position - change.previousPosition
-                                
-                                // If we haven't started dragging yet, check if this is a vertical drag
-                                if (!isDragging) {
-                                    if (abs(dragAmount.y) > abs(dragAmount.x) &&
-                                        abs(dragAmount.y) > 5f) {
-                                        isDragging = true
+                .let { modifier ->
+                    if (!dragOnlyFromHandle) {
+                        modifier.pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val down = awaitFirstDown(requireUnconsumed = false)
+                                    var isDragging = false
+                                    
+                                    drag(down.id) { change ->
+                                        val dragAmount = change.position - change.previousPosition
+                                        
+                                        // If we haven't started dragging yet, check if this is a vertical drag
+                                        if (!isDragging) {
+                                            if (abs(dragAmount.y) > abs(dragAmount.x) &&
+                                                abs(dragAmount.y) > 5f) {
+                                                isDragging = true
+                                            }
+                                        }
+                                        
+                                        // If we're dragging vertically, handle it
+                                        if (isDragging && dragAmount.y > 0) {
+                                            val newOffset = dragOffsetY + dragAmount.y
+                                            dragOffsetY = if (newOffset > 0) newOffset else 0f
+                                            change.consume()
+                                        }
+                                    }
+                                    
+                                    // Handle drag end
+                                    if (dragOffsetY > dismissThreshold) {
+                                        onDismiss()
+                                    } else {
+                                        dragOffsetY = 0f
                                     }
                                 }
-                                
-                                // If we're dragging vertically, handle it
-                                if (isDragging && dragAmount.y > 0) {
-                                    val newOffset = dragOffsetY + dragAmount.y
-                                    dragOffsetY = if (newOffset > 0) newOffset else 0f
-                                    change.consume()
-                                }
-                            }
-                            
-                            // Handle drag end
-                            if (dragOffsetY > dismissThreshold) {
-                                onDismiss()
-                            } else {
-                                dragOffsetY = 0f
                             }
                         }
+                    } else {
+                        modifier
                     }
                 }
         ) {
@@ -114,7 +121,47 @@ fun DraggableBottomSheetWrapper(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = dimensions.paddingMedium)
-                        .height(32.dp), // Larger touch area
+                        .height(32.dp) // Larger touch area
+                        .let { modifier ->
+                            if (dragOnlyFromHandle) {
+                                modifier.pointerInput(Unit) {
+                                    awaitPointerEventScope {
+                                        while (true) {
+                                            val down = awaitFirstDown(requireUnconsumed = false)
+                                            var isDragging = false
+                                            
+                                            drag(down.id) { change ->
+                                                val dragAmount = change.position - change.previousPosition
+                                                
+                                                // If we haven't started dragging yet, check if this is a vertical drag
+                                                if (!isDragging) {
+                                                    if (abs(dragAmount.y) > abs(dragAmount.x) &&
+                                                        abs(dragAmount.y) > 5f) {
+                                                        isDragging = true
+                                                    }
+                                                }
+                                                
+                                                // If we're dragging vertically, handle it
+                                                if (isDragging && dragAmount.y > 0) {
+                                                    val newOffset = dragOffsetY + dragAmount.y
+                                                    dragOffsetY = if (newOffset > 0) newOffset else 0f
+                                                    change.consume()
+                                                }
+                                            }
+                                            
+                                            // Handle drag end
+                                            if (dragOffsetY > dismissThreshold) {
+                                                onDismiss()
+                                            } else {
+                                                dragOffsetY = 0f
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                modifier
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
