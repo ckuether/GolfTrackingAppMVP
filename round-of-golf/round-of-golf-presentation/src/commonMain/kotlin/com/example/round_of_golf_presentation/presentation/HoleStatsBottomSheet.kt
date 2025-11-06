@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -141,18 +139,25 @@ fun HoleStats(
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         scores.take(3).forEach { score ->
-                            ScoreButton(
-                                score = score,
-                                isSelected = selectedScore == score,
-                                onClick = { selectedScore = score },
-                                par = par
-                            )
+                            when {
+                                score == par -> ParButton(
+                                    isSelected = selectedScore == score,
+                                    onClick = { selectedScore = score },
+                                    par = par
+                                )
+                                else -> ScoreButton(
+                                    score = score,
+                                    isSelected = selectedScore == score,
+                                    onClick = { selectedScore = score },
+                                    par = par
+                                )
+                            }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(dimensions.spacingMedium))
 
-                    // Second row: 4 (Par), 5 (Bogey highlighted), 6
+                    // Second row: 4, 5, 6
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
