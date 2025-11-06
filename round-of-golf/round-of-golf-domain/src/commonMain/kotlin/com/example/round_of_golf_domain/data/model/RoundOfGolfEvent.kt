@@ -21,7 +21,8 @@ data class LocationUpdated(
 data class ShotTracked(
     val holeNumber: Int,
     val club: GolfClubType,
-    val location: Location,
+    val startLocation: Location,
+    val endLocation: Location
 ): RoundOfGolfEvent()
 
 @Serializable

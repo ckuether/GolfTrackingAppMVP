@@ -1,9 +1,12 @@
 package com.example.round_of_golf_presentation.presentation
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -36,6 +39,7 @@ import com.example.core_ui.components.DraggableBottomSheetWrapper
 import com.example.core_ui.resources.LocalDimensionResources
 import com.example.round_of_golf_domain.data.model.ShotTracked
 import com.example.round_of_golf_domain.domain.usecase.GetTrackedShotsForHoleUseCase
+import com.example.round_of_golf_domain.domain.usecase.GetShotDistanceUseCase
 import com.example.shared.data.model.Hole
 import com.example.shared.utils.StringResources
 import com.example.core_ui.utils.UiText
@@ -92,16 +96,16 @@ fun HoleStats(
     val getTrackedShotsUseCase: GetTrackedShotsForHoleUseCase = koinInject()
     val trackedShots by getTrackedShotsUseCase(roundId, currentHoleNumber).collectAsState(initial = emptyList())
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(dimensions.paddingXXLarge)
-            .padding(bottom = dimensions.paddingXXLarge)
     ) {
         // Scrollable content
         LazyColumn(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(bottom = dimensions.buttonHeight + dimensions.paddingXXLarge + dimensions.spacingMedium),
             verticalArrangement = Arrangement.spacedBy(dimensions.spacingMedium)
         ) {
             item {
@@ -124,12 +128,12 @@ fun HoleStats(
                     )
                 }
             }
-            
+
             item {
                 // Score selection grid
                 val par = currentHole?.par ?: 4
                 val scores = (1..9).toList()
-                
+
                 Column {
                     // First row: 1, 2, 3
                     Row(
@@ -188,7 +192,7 @@ fun HoleStats(
                     }
                 }
             }
-            
+
             item {
                 // Putts section
                 Column {
@@ -215,7 +219,7 @@ fun HoleStats(
                     }
                 }
             }
-            
+
             // Tracked Shots section
             if (trackedShots.isNotEmpty()) {
                 item {
@@ -226,25 +230,33 @@ fun HoleStats(
                         color = Color.Black
                     )
                 }
-                
+
                 items(trackedShots) { shot ->
                     TrackedShotItem(
                         shot = shot,
                         dimensions = dimensions
                     )
                 }
+
+                item {
+                    Spacer(modifier = Modifier.height(dimensions.spacingMedium))
+                }
             }
         }
 
-        
-        Spacer(modifier = Modifier.height(dimensions.spacingMedium))
-        
-        // Navigation and finish button container - anchored above bottom navigation
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Navigation and finish button container - anchored to bottom
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = dimensions.paddingXXLarge)
+                .align(Alignment.BottomCenter)
         ) {
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
             // Left arrow
             IconButton(
                 onClick = {
@@ -297,6 +309,7 @@ fun HoleStats(
                     tint = if (currentHoleNumber < totalHoles) Color.Black else Color.Gray
                 )
             }
+            }
         }
     }
 }
@@ -306,6 +319,8 @@ private fun TrackedShotItem(
     shot: ShotTracked,
     dimensions: com.example.core_ui.resources.DimensionResources
 ) {
+    val getShotDistanceUseCase: GetShotDistanceUseCase = koinInject()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -329,15 +344,10 @@ private fun TrackedShotItem(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    text = "Lat: ${shot.location.lat}, Lng: ${shot.location.long}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
-            
+
             Text(
-                text = shot.club.shortName,
+                text = getShotDistanceUseCase(shot),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary

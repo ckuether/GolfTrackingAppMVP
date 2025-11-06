@@ -6,6 +6,7 @@ import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseC
 import com.example.round_of_golf_domain.domain.usecase.TrackHoleChangedEventUseCase
 import com.example.round_of_golf_domain.domain.usecase.CheckUserLocationInHoleBoundsUseCase
 import com.example.round_of_golf_domain.domain.usecase.GetTrackedShotsForHoleUseCase
+import com.example.round_of_golf_domain.domain.usecase.GetShotDistanceUseCase
 import org.koin.dsl.module
 val roundOfGolfDomainModule = module {
     // Use Cases - Single Responsibility Principle
@@ -13,6 +14,7 @@ val roundOfGolfDomainModule = module {
     single { TrackHoleChangedEventUseCase(get()) }
     single { CheckUserLocationInHoleBoundsUseCase() }
     single { GetTrackedShotsForHoleUseCase(get()) }
+    single { GetShotDistanceUseCase() }
 
     // Repositories
     single<RoundOfGolfEventLocalRepository> {

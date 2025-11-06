@@ -397,7 +397,8 @@ fun RoundOfGolf(
                     val shotTrackedEvent = ShotTracked(
                         holeNumber = currentHoleNumber,
                         club = selectedClub!!,
-                        location = trackShotEndLocation
+                        startLocation = trackShotStartLocation,
+                        endLocation = trackShotEndLocation
                     )
 
                     trackEventUseCase.execute(
