@@ -50,8 +50,9 @@ fun HoleStatsBottomSheet(
     totalHoles: Int,
     roundId: Long,
     existingScore: Int? = null,
+    existingPutts: Int? = null,
     onDismiss: () -> Unit,
-    onFinishHole: (score: Int, putts: Int) -> Unit,
+    onFinishHole: (score: Int, putts: Int?) -> Unit,
     prevHoleClicked: () -> Unit,
     nextHoleClicked: () -> Unit
 ) {
@@ -66,6 +67,7 @@ fun HoleStatsBottomSheet(
             totalHoles = totalHoles,
             roundId = roundId,
             existingScore = existingScore,
+            existingPutts = existingPutts,
             onDismiss = onDismiss,
             onFinishHole = onFinishHole,
             prevHoleClicked = prevHoleClicked,
@@ -82,14 +84,15 @@ fun HoleStats(
     totalHoles: Int,
     roundId: Long,
     existingScore: Int? = null,
+    existingPutts: Int? = null,
     onDismiss: () -> Unit,
-    onFinishHole: (score: Int, putts: Int) -> Unit,
+    onFinishHole: (score: Int, putts: Int?) -> Unit,
     prevHoleClicked: () -> Unit,
     nextHoleClicked: () -> Unit
 ) {
     val dimensions = LocalDimensionResources.current
     var selectedScore by remember(currentHoleNumber) { mutableStateOf(existingScore) }
-    var selectedPutts by remember(currentHoleNumber) { mutableStateOf(0) }
+    var selectedPutts by remember(currentHoleNumber) { mutableStateOf(existingPutts) }
     
     val getTrackedShotsUseCase: GetTrackedShotsForHoleUseCase = koinInject()
     val trackedShots by getTrackedShotsUseCase(roundId, currentHoleNumber).collectAsState(initial = emptyList())

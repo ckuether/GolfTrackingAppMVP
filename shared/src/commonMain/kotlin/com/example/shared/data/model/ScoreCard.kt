@@ -56,4 +56,8 @@ data class ScoreCard(
     fun getHoleScore(holeNumber: Int): Int? {
         return holeStatsMap[holeNumber]?.score
     }
+
+    fun getHolePutts(holeNumber: Int): Int? {
+        return holeStatsMap[holeNumber]?.putts
+    }
 }
