@@ -216,7 +216,7 @@ private fun ScoreCardContent(
                             ) {
                                 // Player scores
                                 allHoles.keys.sorted().forEach { holeNumber ->
-                                    val score = currentScoreCard.holeStatsMap[holeNumber]
+                                    val score = currentScoreCard.holeStatsMap[holeNumber]?.score
                                     Text(
                                         text = score?.toString() ?: "-",
                                         modifier = Modifier.width(45.dp),

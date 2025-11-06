@@ -834,6 +834,7 @@ fun RoundOfGolf(
                 totalHoles = golfCourse.holes.size,
                 roundId = currentScoreCard.roundId,
                 existingScore = viewModel.getHoleScore(currentHoleNumber),
+                existingPutts = viewModel.getHolePutts(currentHoleNumber),
                 onDismiss = { showHoleStats = false },
                 onFinishHole = { score, putts ->
                     showHoleStats = false

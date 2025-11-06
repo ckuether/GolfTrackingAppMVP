@@ -230,6 +230,10 @@ class RoundOfGolfViewModel(
         return scoreCard.getHoleScore(holeNumber)
     }
 
+    fun getHolePutts(holeNumber: Int): Int?{
+        return scoreCard.getHolePutts(holeNumber)
+    }
+
     fun saveHoleScore(holeNumber: Int, score: Int, putts: Int?) {
         val holeStats = scoreCard.holeStatsMap.toMutableMap()
         val currentHole = holeStats.getOrPut(holeNumber) { HoleStats() }
