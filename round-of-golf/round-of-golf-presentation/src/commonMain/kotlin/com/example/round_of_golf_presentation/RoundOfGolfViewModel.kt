@@ -234,6 +234,24 @@ class RoundOfGolfViewModel(
         return scoreCard.getHolePutts(holeNumber)
     }
 
+    fun updateScoreCard(updatedScoreCard: ScoreCard) {
+        _currentScoreCard.value = updatedScoreCard.copy(
+            lastUpdatedTimestamp = getCurrentTimeMillis()
+        )
+        
+        // Save to database using UseCase
+        viewModelScope.launch(Dispatchers.IO) {
+            saveScoreCardUseCase(updatedScoreCard).fold(
+                onSuccess = {
+                    logger.debug("RoundOfGolfViewModel", "ScoreCard updated successfully")
+                },
+                onFailure = { error ->
+                    logger.error("RoundOfGolfViewModel", "Failed to save updated scorecard", error)
+                }
+            )
+        }
+    }
+
     fun saveHoleScore(holeNumber: Int, score: Int, putts: Int?) {
         val holeStats = scoreCard.holeStatsMap.toMutableMap()
         val currentHole = holeStats.getOrPut(holeNumber) { HoleStats() }

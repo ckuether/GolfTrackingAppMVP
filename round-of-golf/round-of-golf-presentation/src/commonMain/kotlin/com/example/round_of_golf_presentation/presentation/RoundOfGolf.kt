@@ -56,6 +56,8 @@ import com.example.round_of_golf_domain.data.model.ShotTracked
 import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseCase
 import com.example.round_of_golf_domain.domain.usecase.TrackHoleChangedEventUseCase
 import com.example.round_of_golf_domain.domain.usecase.CheckUserLocationInHoleBoundsUseCase
+import com.example.round_of_golf_domain.domain.usecase.GetTrackedShotsForHoleUseCase
+import com.example.round_of_golf_domain.domain.usecase.UpdateHoleStatsFromTrackedShotsUseCase
 import com.example.round_of_golf_presentation.presentation.components.DraggableMarker
 import com.example.round_of_golf_presentation.presentation.components.HoleInfoCard
 import com.example.round_of_golf_presentation.presentation.components.HoleNavigationCard
@@ -84,6 +86,7 @@ import com.example.round_of_golf_presentation.utils.RoundOfGolfUiEvent
 import com.example.round_of_golf_presentation.utils.TrackShotUiEvent
 import com.example.shared.navigation.Route
 import com.example.shared.utils.TimeMillis
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -103,6 +106,8 @@ fun RoundOfGolf(
     val trackEventUseCase: TrackSingleRoundEventUseCase = koinInject()
     val trackHoleChangedEventUseCase: TrackHoleChangedEventUseCase = koinInject()
     val checkUserLocationInHoleBoundsUseCase: CheckUserLocationInHoleBoundsUseCase = koinInject()
+    val getTrackedShotsForHoleUseCase: GetTrackedShotsForHoleUseCase = koinInject()
+    val updateHoleStatsFromTrackedShotsUseCase: UpdateHoleStatsFromTrackedShotsUseCase = koinInject()
     val locationState by viewModel.locationState.collectAsStateWithLifecycle()
 
     val currentScoreCard by viewModel.currentScoreCard.collectAsStateWithLifecycle()
@@ -432,6 +437,19 @@ fun RoundOfGolf(
                         roundId = currentScoreCard.roundId,
                         playerId = currentPlayer.id
                     )
+
+                    // Update hole stats based on tracked shots
+                    launch {
+                        updateHoleStatsFromTrackedShotsUseCase(currentScoreCard, currentHoleNumber).fold(
+                            onSuccess = { updatedScoreCard ->
+                                viewModel.updateScoreCard(updatedScoreCard)
+                            },
+                            onFailure = { error ->
+                                // Handle error if needed, but don't crash the app
+                                println("Failed to update hole stats: ${error.message}")
+                            }
+                        )
+                    }
 
                     currentBallLocation = trackShotEndLocation
                     trackShotStartLocation = trackShotEndLocation
