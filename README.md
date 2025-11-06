@@ -182,19 +182,10 @@ The modular architecture and dependency injection setup facilitate easy mocking 
 
 ## 📱 Demo Videos
 
-### Android Demo
+### Demo
 
 
-https://github.com/user-attachments/assets/3b4bc43e-88ba-4228-92d0-e512d50cd87e
-
-
-
-### iOS Demo  
-
-
-
-https://github.com/user-attachments/assets/9a267f57-736e-4029-bf78-5a348e94decc
-
+https://github.com/user-attachments/assets/e525d2ec-53e0-4de4-b4fa-2343abcdd3eb
 
 
 ---
