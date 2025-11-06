@@ -53,8 +53,12 @@ kotlin {
                 implementation(compose.material3)
                 implementation(compose.materialIconsExtended)
                 implementation(compose.ui)
+                implementation(compose.uiUtil)
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
+
+                // UI BackHandler for Compose Multiplatform
+                implementation(libs.compose.ui.backhandler)
 
                 // Koin for dependency injection
                 implementation(libs.koin.core)

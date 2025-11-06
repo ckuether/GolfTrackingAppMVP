@@ -25,7 +25,7 @@ data class DimensionResources(
     val paddingXXLarge: Dp = 24.dp,
 
     // Component sizes
-    val buttonHeight: Dp = 56.dp,
+    val buttonHeight: Dp = 48.dp,
     val buttonCornerRadius: Dp = 28.dp,
     val scoreButtonSize: Dp = 60.dp,
     val puttsButtonSize: Dp = 50.dp,

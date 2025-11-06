@@ -25,12 +25,6 @@ import kotlinx.coroutines.IO
 abstract class AppDatabase : RoomDatabase() {
     abstract fun scoreCardDao(): ScoreCardDao
     
-    @Deprecated(
-        message = "Use roundOfGolfEventDao() with LocationUpdated events instead",
-        replaceWith = ReplaceWith("roundOfGolfEventDao()"),
-        level = DeprecationLevel.WARNING
-    )
-    
     abstract fun roundOfGolfEventDao(): RoundOfGolfEventDao
 }
 

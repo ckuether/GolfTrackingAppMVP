@@ -14,6 +14,7 @@ enum class GolfClubType(val clubName: String, val shortName: String, val range: 
     Iron_7("7 Iron", "7i", Pair(140,155)),
     Iron_8("8 Iron", "8i", Pair(125,140)),
     Iron_9("9 Iron", "9i", Pair(110,125)),
-    Pitch("Pitch", "P", Pair(170,200)),
-    Wedge_54("54 Wedge", "54", Pair(20, 65))
+    Pitch("Pitch", "Pi", Pair(170,200)),
+    Wedge_54("54 Wedge", "54", Pair(20, 65)),
+    Putter("Putter", "Put", Pair(0, 20))
 }

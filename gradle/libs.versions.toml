@@ -87,6 +87,9 @@ coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 ## String Resources
 string-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "string-resources" }
 
+## UI BackHandler for Compose Multiplatform
+compose-ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "composeMultiplatform" }
+
 core = { group = "androidx.core", name = "core", version.ref = "coreVersion" }
 
 [plugins]

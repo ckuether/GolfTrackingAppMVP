@@ -49,6 +49,12 @@ fun ArccosMVPApp(){
                     navController.navigate(event.route)
                 }
 
+                is UiEvent.NavigateAndClearBackStack -> {
+                    navController.navigate(event.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+
                 is UiEvent.NavigateUp -> {
                     navController.navigateUp()
                 }

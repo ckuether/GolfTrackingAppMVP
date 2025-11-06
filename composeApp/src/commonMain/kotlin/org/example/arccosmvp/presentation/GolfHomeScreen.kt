@@ -18,7 +18,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.layout.ContentScale
 import com.example.shared.utils.StringResources
 import com.example.core_ui.components.RoundedButton
@@ -30,6 +32,7 @@ import org.example.arccosmvp.presentation.viewmodel.AppViewModel
 import com.example.shared.utils.DrawableResources
 import org.jetbrains.compose.resources.painterResource
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun GolfHomeScreen(
     appViewModel: AppViewModel,
@@ -39,6 +42,14 @@ fun GolfHomeScreen(
     val allScoreCards by appViewModel.allScoreCards.collectAsStateWithLifecycle(emptyList())
     val course by appViewModel.course.collectAsStateWithLifecycle()
     var showPreviousRounds by remember { mutableStateOf(false) }
+
+    //TODO: This BackHandler is Experimental and may break in the future
+    BackHandler {
+        if(showPreviousRounds){
+            showPreviousRounds = false
+            return@BackHandler
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -70,7 +81,7 @@ fun GolfHomeScreen(
                 text = if (course == null) UiText.StringResourceId(StringResources.loadingCourse).asString() else UiText.StringResourceId(StringResources.startRound).asString(),
                 enabled = course != null,
                 onClick = {
-                    updateUiEvent(UiEvent.Navigate(Route.ROUND_OF_GOLF))
+                    updateUiEvent(UiEvent.NavigateAndClearBackStack(Route.ROUND_OF_GOLF))
                 }
             )
 

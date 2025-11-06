@@ -93,4 +93,7 @@
     <string name="failed_to_track_shot_template">Failed to track shot: %1$s</string>
     <string name="select_golf_club">Select golf club</string>
     <string name="round_completed">Round completed!</string>
+    <string name="exit_round">Exit Round</string>
+    <string name="exit_round_confirmation">Are you sure you want to exit this round? Your progress will be saved.</string>
+    <string name="exit">Exit</string>
 </resources>
