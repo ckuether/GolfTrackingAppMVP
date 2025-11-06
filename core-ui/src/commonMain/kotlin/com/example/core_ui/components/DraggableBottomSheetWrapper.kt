@@ -24,7 +24,7 @@ import kotlin.math.roundToInt
 @Composable
 fun DraggableBottomSheetWrapper(
     onDismiss: () -> Unit,
-    fillMaxHeight: Float? = 0.8f,
+    fillMaxHeight: Float? = null,
     dragOnlyFromHandle: Boolean = false,
     content: @Composable () -> Unit
 ) {

@@ -24,7 +24,7 @@ fun PreviousRoundsBottomSheet(
 ) {
     DraggableBottomSheetWrapper(
         onDismiss = onDismiss,
-        fillMaxHeight = 0.8f
+        dragOnlyFromHandle = true
     ) {
         PreviousRoundsContent(
             scoreCards = scoreCards
@@ -41,22 +41,22 @@ private fun PreviousRoundsContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(dimensions.paddingXXLarge)
+            .padding(horizontal = dimensions.paddingXXLarge)
+            .safeContentPadding()
     ) {
         // Title
         Text(
             text = UiText.StringResourceId(StringResources.previousRounds).asString(),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = dimensions.spacingLarge)
+            modifier = Modifier.padding(bottom = dimensions.spacingMedium)
         )
         
         if (scoreCards.isEmpty()) {
             // Empty state
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -80,7 +80,7 @@ private fun PreviousRoundsContent(
         } else {
             // Scorecards list
             LazyColumn(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(dimensions.spacingMedium)
             ) {
                 items(scoreCards) { scoreCard ->

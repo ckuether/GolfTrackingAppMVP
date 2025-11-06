@@ -98,4 +98,7 @@ object StringResources {
     val failedToTrackShotTemplate = Res.string.failed_to_track_shot_template
     val selectGolfClub = Res.string.select_golf_club
     val roundCompleted = Res.string.round_completed
+    val exitRound = Res.string.exit_round
+    val exitRoundConfirmation = Res.string.exit_round_confirmation
+    val exit = Res.string.exit
 }

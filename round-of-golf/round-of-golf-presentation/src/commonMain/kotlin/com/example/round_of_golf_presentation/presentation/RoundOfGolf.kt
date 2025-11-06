@@ -32,7 +32,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -41,6 +43,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.location_presentation.platform.MapView
 import com.example.location_presentation.platform.MapCameraPosition
+import com.example.core_ui.components.ConfirmationDialog
 import com.example.core_ui.components.FloatingActionButton
 import com.example.core_ui.resources.LocalDimensionResources
 import com.example.shared.utils.StringResources
@@ -79,11 +82,13 @@ import com.example.round_of_golf_presentation.presentation.components.YardageDis
 import com.example.round_of_golf_presentation.presentation.components.YardageDisplayDefaults
 import com.example.round_of_golf_presentation.utils.RoundOfGolfUiEvent
 import com.example.round_of_golf_presentation.utils.TrackShotUiEvent
+import com.example.shared.navigation.Route
 import com.example.shared.utils.TimeMillis
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun RoundOfGolf(
     currentPlayer: Player,
@@ -256,6 +261,28 @@ fun RoundOfGolf(
     var showClubSelection by remember { mutableStateOf(false) }
     var showHoleStats by remember { mutableStateOf(false) }
     var showFullScoreCard by remember { mutableStateOf(false) }
+    var showExitConfirmation by remember { mutableStateOf(false) }
+
+    //TODO: This BackHandler is Experimental and may break in the future
+    BackHandler {
+
+        if(showClubSelection){
+            showClubSelection = false
+            return@BackHandler
+        }
+
+        if(showHoleStats){
+            showHoleStats = false
+            return@BackHandler
+        }
+
+        if(showFullScoreCard){
+            showFullScoreCard = false
+            return@BackHandler
+        }
+
+        showExitConfirmation = true
+    }
 
     // Auto-hide UI timer
     LaunchedEffect(lastTouchTime) {
@@ -372,8 +399,7 @@ fun RoundOfGolf(
                     navigateToNextHole()
                 }
                 RoundOfGolfUiEvent.OnFinishRound -> {
-                    //TODO: Do something
-                    updateUiEvent(UiEvent.ShowSnackbar(UiText.DynamicString(roundCompletedMessage)))
+                    updateUiEvent(UiEvent.NavigateAndClearBackStack(Route.GOLF_HOME))
                 }
             }
             viewModel.clearRoundOfGolfUiEvent()
@@ -842,6 +868,23 @@ fun RoundOfGolf(
                 },
                 onDismiss = {
                     showClubSelection = false
+                }
+            )
+        }
+
+        // Exit Confirmation Dialog
+        if (showExitConfirmation) {
+            ConfirmationDialog(
+                title = UiText.StringResourceId(StringResources.exitRound).asString(),
+                body = UiText.StringResourceId(StringResources.exitRoundConfirmation).asString(),
+                confirmText = UiText.StringResourceId(StringResources.exit).asString(),
+                cancelText = UiText.StringResourceId(StringResources.cancel).asString(),
+                onConfirm = {
+                    showExitConfirmation = false
+                    viewModel.updateRoundOfGolfUiEvent(RoundOfGolfUiEvent.OnFinishRound)
+                },
+                onCancel = {
+                    showExitConfirmation = false
                 }
             )
         }
