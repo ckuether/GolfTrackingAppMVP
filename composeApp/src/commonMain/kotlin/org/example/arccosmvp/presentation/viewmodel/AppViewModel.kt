@@ -45,13 +45,13 @@ class AppViewModel(
     val allScoreCards = getAllScoreCards()
 
     init {
-        this@AppViewModel.loadGolfCourse()
-        this@AppViewModel.loadCurrentUser()
+        loadGolfCourse()
+        loadCurrentUser()
     }
     
     private fun loadGolfCourse() {
         viewModelScope.launch {
-            loadGolfCourse().fold(
+            loadGolfCourse.invoke().fold(
                 onSuccess = { course ->
                     _course.value = course
                     logger.info(TAG, "Golf course loaded: ${course?.name}")
@@ -65,7 +65,7 @@ class AppViewModel(
     
     private fun loadCurrentUser() {
         viewModelScope.launch {
-            loadCurrentUser().fold(
+            loadCurrentUser.invoke().fold(
                 onSuccess = { player ->
                     _currentPlayer.value = player
                     logger.info(TAG, "Current player loaded: ${player.name} (ID: ${player.id})")
