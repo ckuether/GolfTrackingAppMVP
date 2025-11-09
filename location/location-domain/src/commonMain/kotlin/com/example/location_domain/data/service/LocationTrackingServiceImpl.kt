@@ -1,7 +1,7 @@
 package com.example.location_domain.data.service
 
 import com.example.location_domain.domain.service.LocationTrackingService
-import com.example.location_domain.platform.BackgroundLocationService
+import com.example.location_domain.domain.service.BackgroundLocationService
 import com.example.shared.data.model.Location
 import com.example.shared.utils.TimeMillis
 import kotlinx.coroutines.Job

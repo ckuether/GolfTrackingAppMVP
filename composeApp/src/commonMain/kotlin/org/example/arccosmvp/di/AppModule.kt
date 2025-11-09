@@ -4,10 +4,10 @@ import com.example.shared.data.model.Course
 import com.example.shared.data.repository.GolfCourseRepository
 import com.example.shared.data.repository.UserRepository
 import com.example.shared.data.repository.UserRepositoryImpl
-import com.example.shared.usecase.LoadGolfCourseUseCase
-import com.example.shared.usecase.LoadCurrentUserUseCase
-import com.example.round_of_golf_domain.domain.usecase.SaveScoreCardUseCase
-import com.example.shared.usecase.GetAllScoreCardsUseCase
+import com.example.shared.usecase.LoadGolfCourse
+import com.example.shared.usecase.LoadCurrentUser
+import com.example.round_of_golf_domain.domain.usecase.SaveScoreCard
+import com.example.shared.usecase.GetAllScoreCards
 import com.example.round_of_golf_presentation.RoundOfGolfViewModel
 import com.example.shared.data.model.Player
 import org.example.arccosmvp.presentation.viewmodel.AppViewModel
@@ -21,10 +21,10 @@ val appModule = module {
     single<UserRepository> { UserRepositoryImpl(get()) }
     
     // UseCases
-    factoryOf(::LoadGolfCourseUseCase)
-    factoryOf(::LoadCurrentUserUseCase)
-    factoryOf(::SaveScoreCardUseCase)
-    factoryOf(::GetAllScoreCardsUseCase)
+    factoryOf(::LoadGolfCourse)
+    factoryOf(::LoadCurrentUser)
+    factoryOf(::SaveScoreCard)
+    factoryOf(::GetAllScoreCards)
     
     factory { (course: Course, player: Player) ->
         RoundOfGolfViewModel(
@@ -32,9 +32,9 @@ val appModule = module {
             currentPlayer = player,
             locationTrackingService = get(),
             trackEventUseCase = get(),
-            checkLocationPermissionUseCase = get(),
-            requestLocationPermissionUseCase = get(),
-            saveScoreCardUseCase = get(),
+            checkLocationPermission = get(),
+            requestLocationPermission = get(),
+            saveScoreCard = get(),
             logger = get()
         )
     }

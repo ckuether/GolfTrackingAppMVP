@@ -12,7 +12,7 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.example.location_domain.domain.usecase.CalculateMapCameraPositionUseCase
+import com.example.location_domain.domain.usecase.CalculateMapCameraPosition
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
@@ -34,7 +34,7 @@ actual fun MapView(
     val cameraPositionState = rememberCameraPositionState()
     
     // Inject use case for camera position calculation
-    val calculateCameraPositionUseCase: CalculateMapCameraPositionUseCase = koinInject()
+    val calculateCameraPosition: CalculateMapCameraPosition = koinInject()
     
     // Create camera controller
     val cameraController = remember { MapCameraController(cameraPositionState) }
@@ -54,7 +54,7 @@ actual fun MapView(
     LaunchedEffect(currentHole, currentBallLocation) {
         currentHole?.let { hole ->
             // Calculate camera position using current ball location and flag
-            val cameraPosition = calculateCameraPositionUseCase(currentBallLocation, hole.flagLocation)
+            val cameraPosition = calculateCameraPosition(currentBallLocation, hole.flagLocation)
             
             // Apply camera positioning using platform-specific controller
             cameraController.applyHoleCameraPosition(hole, currentBallLocation, cameraPosition)

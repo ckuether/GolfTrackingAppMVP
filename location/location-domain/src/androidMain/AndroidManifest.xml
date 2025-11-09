@@ -9,7 +9,7 @@
 
     <application>
         <service 
-            android:name="com.example.location_domain.platform.LocationForegroundService"
+            android:name="com.example.location_domain.domain.service.LocationForegroundService"
             android:foregroundServiceType="location"
             android:exported="false" />
     </application>

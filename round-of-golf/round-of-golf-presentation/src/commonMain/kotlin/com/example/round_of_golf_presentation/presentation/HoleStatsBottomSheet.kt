@@ -36,8 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import com.example.core_ui.components.DraggableBottomSheetWrapper
 import com.example.core_ui.resources.LocalDimensionResources
 import com.example.round_of_golf_domain.data.model.ShotTracked
-import com.example.round_of_golf_domain.domain.usecase.GetTrackedShotsForHoleUseCase
-import com.example.round_of_golf_domain.domain.usecase.GetShotDistanceUseCase
+import com.example.round_of_golf_domain.domain.usecase.GetTrackedShotsForHole
+import com.example.round_of_golf_domain.domain.usecase.GetShotDistance
 import com.example.shared.data.model.Hole
 import com.example.shared.utils.StringResources
 import com.example.core_ui.utils.UiText
@@ -94,7 +94,7 @@ fun HoleStats(
     var selectedScore by remember(currentHoleNumber) { mutableStateOf(existingScore) }
     var selectedPutts by remember(currentHoleNumber) { mutableStateOf(existingPutts) }
     
-    val getTrackedShotsUseCase: GetTrackedShotsForHoleUseCase = koinInject()
+    val getTrackedShotsUseCase: GetTrackedShotsForHole = koinInject()
     val trackedShots by getTrackedShotsUseCase(roundId, currentHoleNumber).collectAsState(initial = emptyList())
 
     Box(
@@ -327,7 +327,7 @@ private fun TrackedShotItem(
     shot: ShotTracked,
     dimensions: com.example.core_ui.resources.DimensionResources
 ) {
-    val getShotDistanceUseCase: GetShotDistanceUseCase = koinInject()
+    val getShotDistance: GetShotDistance = koinInject()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -355,7 +355,7 @@ private fun TrackedShotItem(
             }
 
             Text(
-                text = getShotDistanceUseCase(shot),
+                text = getShotDistance(shot),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary

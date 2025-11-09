@@ -3,16 +3,16 @@ package com.example.round_of_golf_presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.location_domain.data.model.LocationTrackingUiState
-import com.example.location_domain.domain.usecase.CheckLocationPermissionUseCase
-import com.example.location_domain.domain.usecase.RequestLocationPermissionUseCase
-import com.example.location_domain.domain.usecase.PermissionResult
+import com.example.location_domain.domain.permissions.CheckLocationPermission
+import com.example.location_domain.domain.permissions.RequestLocationPermission
+import com.example.location_domain.domain.permissions.PermissionResult
 import com.example.location_domain.domain.service.LocationTrackingService
 import com.example.round_of_golf_domain.data.model.LocationUpdated
 import com.example.shared.data.model.Course
 import com.example.shared.data.model.ScoreCard
 import com.example.shared.platform.getCurrentTimeMillis
-import com.example.round_of_golf_domain.domain.usecase.SaveScoreCardUseCase
-import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseCase
+import com.example.round_of_golf_domain.domain.usecase.SaveScoreCard
+import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEvent
 import com.example.round_of_golf_presentation.utils.RoundOfGolfUiEvent
 import com.example.round_of_golf_presentation.utils.TrackShotUiEvent
 import com.example.shared.data.model.HoleStats
@@ -34,10 +34,10 @@ class RoundOfGolfViewModel(
     private val course: Course,
     private val currentPlayer: Player,
     private val locationTrackingService: LocationTrackingService,
-    private val trackEventUseCase: TrackSingleRoundEventUseCase,
-    private val checkLocationPermissionUseCase: CheckLocationPermissionUseCase,
-    private val requestLocationPermissionUseCase: RequestLocationPermissionUseCase,
-    private val saveScoreCardUseCase: SaveScoreCardUseCase,
+    private val trackEventUseCase: TrackSingleRoundEvent,
+    private val checkLocationPermission: CheckLocationPermission,
+    private val requestLocationPermission: RequestLocationPermission,
+    private val saveScoreCard: SaveScoreCard,
     private val logger: Logger
 ) : ViewModel() {
 
@@ -88,7 +88,7 @@ class RoundOfGolfViewModel(
         logger.info(TAG, "startLocationTracking() called")
         viewModelScope.launch {
             // Check permission first
-            if (!checkLocationPermissionUseCase()) {
+            if (!checkLocationPermission()) {
                 logger.warn(TAG, "Location permission not granted")
                 _locationState.value = _locationState.value.copy(
                     error = "Location permission required. Please grant permission first.",
@@ -187,7 +187,7 @@ class RoundOfGolfViewModel(
             _locationState.value = _locationState.value.copy(isRequestingPermission = true, error = null)
 
             try {
-                val result = requestLocationPermissionUseCase()
+                val result = requestLocationPermission()
 
                 when (result) {
                     is PermissionResult.Granted -> {
@@ -241,7 +241,7 @@ class RoundOfGolfViewModel(
         
         // Save to database using UseCase
         viewModelScope.launch(Dispatchers.IO) {
-            saveScoreCardUseCase(updatedScoreCard).fold(
+            saveScoreCard(updatedScoreCard).fold(
                 onSuccess = {
                     logger.debug("RoundOfGolfViewModel", "ScoreCard updated successfully")
                 },
@@ -266,7 +266,7 @@ class RoundOfGolfViewModel(
 
         // Save to database using UseCase
         viewModelScope.launch(Dispatchers.IO) {
-            saveScoreCardUseCase(updatedCard).fold(
+            saveScoreCard(updatedCard).fold(
                 onSuccess = {
                     logger.info(
                         TAG,
@@ -305,7 +305,7 @@ class RoundOfGolfViewModel(
     fun checkPermissionStatus() {
         viewModelScope.launch {
             try {
-                val hasPermission = checkLocationPermissionUseCase()
+                val hasPermission = checkLocationPermission()
                 _locationState.value = _locationState.value.copy(
                     hasPermission = hasPermission,
                     isRequestingPermission = false // Reset requesting flag
