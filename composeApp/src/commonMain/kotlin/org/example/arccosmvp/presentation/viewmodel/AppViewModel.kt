@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.shared.data.model.Course
 import com.example.shared.data.model.Player
-import com.example.shared.usecase.GetAllScoreCardsUseCase
-import com.example.shared.usecase.LoadGolfCourseUseCase
-import com.example.shared.usecase.LoadCurrentUserUseCase
+import com.example.shared.usecase.GetAllScoreCards
+import com.example.shared.usecase.LoadGolfCourse
+import com.example.shared.usecase.LoadCurrentUser
 import com.example.shared.platform.Logger
 import com.example.core_ui.utils.UiEvent
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,9 +15,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class AppViewModel(
-    private val loadGolfCourseUseCase: LoadGolfCourseUseCase,
-    private val loadCurrentUserUseCase: LoadCurrentUserUseCase,
-    private val getAllScoreCardsUseCase: GetAllScoreCardsUseCase,
+    private val loadGolfCourse: LoadGolfCourse,
+    private val loadCurrentUser: LoadCurrentUser,
+    private val getAllScoreCards: GetAllScoreCards,
     private val logger: Logger
 ) : ViewModel() {
     
@@ -42,7 +42,7 @@ class AppViewModel(
     private val _currentPlayer = MutableStateFlow<Player?>(null)
     val currentPlayer: StateFlow<Player?> = _currentPlayer.asStateFlow()
 
-    val allScoreCards = getAllScoreCardsUseCase()
+    val allScoreCards = getAllScoreCards()
 
     init {
         loadGolfCourse()
@@ -51,7 +51,7 @@ class AppViewModel(
     
     private fun loadGolfCourse() {
         viewModelScope.launch {
-            loadGolfCourseUseCase().fold(
+            loadGolfCourse.invoke().fold(
                 onSuccess = { course ->
                     _course.value = course
                     logger.info(TAG, "Golf course loaded: ${course?.name}")
@@ -65,7 +65,7 @@ class AppViewModel(
     
     private fun loadCurrentUser() {
         viewModelScope.launch {
-            loadCurrentUserUseCase().fold(
+            loadCurrentUser.invoke().fold(
                 onSuccess = { player ->
                     _currentPlayer.value = player
                     logger.info(TAG, "Current player loaded: ${player.name} (ID: ${player.id})")

@@ -53,11 +53,10 @@ import com.example.location_domain.domain.model.ScreenPoint
 import com.example.location_domain.domain.service.MapProjectionService
 import com.example.round_of_golf_domain.data.model.LocationUpdated
 import com.example.round_of_golf_domain.data.model.ShotTracked
-import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEventUseCase
-import com.example.round_of_golf_domain.domain.usecase.TrackHoleChangedEventUseCase
-import com.example.round_of_golf_domain.domain.usecase.CheckUserLocationInHoleBoundsUseCase
-import com.example.round_of_golf_domain.domain.usecase.GetTrackedShotsForHoleUseCase
-import com.example.round_of_golf_domain.domain.usecase.UpdateHoleStatsFromTrackedShotsUseCase
+import com.example.round_of_golf_domain.domain.usecase.TrackSingleRoundEvent
+import com.example.round_of_golf_domain.domain.usecase.TrackHoleChangedEvent
+import com.example.round_of_golf_domain.domain.usecase.CheckUserLocationInHoleBounds
+import com.example.round_of_golf_domain.domain.usecase.UpdateHoleStatsFromTrackedShots
 import com.example.round_of_golf_presentation.presentation.components.DraggableMarker
 import com.example.round_of_golf_presentation.presentation.components.HoleInfoCard
 import com.example.round_of_golf_presentation.presentation.components.HoleNavigationCard
@@ -103,11 +102,10 @@ fun RoundOfGolf(
     val dimensions = LocalDimensionResources.current
 
     val mapProjectionService: MapProjectionService = koinInject()
-    val trackEventUseCase: TrackSingleRoundEventUseCase = koinInject()
-    val trackHoleChangedEventUseCase: TrackHoleChangedEventUseCase = koinInject()
-    val checkUserLocationInHoleBoundsUseCase: CheckUserLocationInHoleBoundsUseCase = koinInject()
-    val getTrackedShotsForHoleUseCase: GetTrackedShotsForHoleUseCase = koinInject()
-    val updateHoleStatsFromTrackedShotsUseCase: UpdateHoleStatsFromTrackedShotsUseCase = koinInject()
+    val trackEventUseCase: TrackSingleRoundEvent = koinInject()
+    val trackHoleChangedEvent: TrackHoleChangedEvent = koinInject()
+    val checkUserLocationInHoleBounds: CheckUserLocationInHoleBounds = koinInject()
+    val updateHoleStatsFromTrackedShots: UpdateHoleStatsFromTrackedShots = koinInject()
     val locationState by viewModel.locationState.collectAsStateWithLifecycle()
 
     val currentScoreCard by viewModel.currentScoreCard.collectAsStateWithLifecycle()
@@ -317,7 +315,7 @@ fun RoundOfGolf(
     // Update current hole when golf course loads or hole number changes
     LaunchedEffect(currentHoleNumber) {
         // Track hole changed event (only if it doesn't already exist for this hole)
-        trackHoleChangedEventUseCase.execute(
+        trackHoleChangedEvent.execute(
             roundId = currentScoreCard.roundId,
             playerId = currentPlayer.id,
             holeNumber = currentHoleNumber
@@ -373,7 +371,7 @@ fun RoundOfGolf(
                     resetUITimer()
                 }
                 RoundOfGolfUiEvent.TrackShotClicked -> {
-                    if(checkUserLocationInHoleBoundsUseCase(lastUserLocation, currentHole)){
+                    if(checkUserLocationInHoleBounds(lastUserLocation, currentHole)){
                         trackShotEndLocation = lastUserLocation
                     }
                     trackShotModeEnabled = true
@@ -440,7 +438,7 @@ fun RoundOfGolf(
 
                     // Update hole stats based on tracked shots
                     launch {
-                        updateHoleStatsFromTrackedShotsUseCase(currentScoreCard, currentHoleNumber).fold(
+                        updateHoleStatsFromTrackedShots(currentScoreCard, currentHoleNumber).fold(
                             onSuccess = { updatedScoreCard ->
                                 viewModel.updateScoreCard(updatedScoreCard)
                             },

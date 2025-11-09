@@ -14,7 +14,7 @@ import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.CValue
 import platform.CoreLocation.CLLocationCoordinate2D
 import cocoapods.GoogleMaps.*
-import com.example.location_domain.domain.usecase.CalculateMapCameraPositionUseCase
+import com.example.location_domain.domain.usecase.CalculateMapCameraPosition
 import kotlinx.cinterop.useContents
 import platform.darwin.NSObject
 import com.example.shared.data.model.Location
@@ -36,7 +36,7 @@ actual fun MapView(
 
     // Get the actual device scale factor for points-to-pixels conversion
     val deviceScale = remember { UIScreen.mainScreen.scale.toInt() }
-    val calculateCameraPositionUseCase: CalculateMapCameraPositionUseCase = koinInject()
+    val calculateCameraPosition: CalculateMapCameraPosition = koinInject()
     val clickHandlerState = remember { mutableStateOf<((Location) -> Unit)?>(null) }
     val mapViewRef = remember { mutableStateOf<GMSMapView?>(null) }
     val delegateRef = remember { mutableStateOf<GMSMapViewDelegateProtocol?>(null) }
@@ -58,7 +58,7 @@ actual fun MapView(
                 when {
                     currentHole != null -> {
                         // Calculate camera position using current ball location and flag
-                        val cameraPosition = calculateCameraPositionUseCase(currentBallLocation, currentHole.flagLocation)
+                        val cameraPosition = calculateCameraPosition(currentBallLocation, currentHole.flagLocation)
                         
                         // Apply camera positioning using platform-specific controller
                         cameraController.applyHoleCameraPosition(currentHole, currentBallLocation, cameraPosition)
