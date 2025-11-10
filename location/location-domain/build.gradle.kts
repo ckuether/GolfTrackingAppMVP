@@ -1,3 +1,5 @@
+import org.jetbrains.compose.ExperimentalComposeLibrary
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
@@ -57,6 +59,12 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
+                implementation(libs.kotlin.test.annotations.common)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.koin.test)
+
+                @OptIn(ExperimentalComposeLibrary::class)
+                implementation(libs.compose.ui.test)
             }
         }
 
