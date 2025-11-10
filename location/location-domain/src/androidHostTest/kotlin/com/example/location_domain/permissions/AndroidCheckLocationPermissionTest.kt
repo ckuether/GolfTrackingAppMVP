@@ -103,6 +103,7 @@ class AndroidCheckLocationPermissionTest {
     @Test
     fun testInvoke_CorrectPermissionConstants() = runTest {
         // Given: Mock to verify correct permission constants are used
+        // We need FINE_LOCATION to return DENIED so COARSE_LOCATION gets checked due to OR logic
         mockkStatic(ContextCompat::class)
         var fineLocationChecked = false
         var coarseLocationChecked = false
@@ -111,21 +112,22 @@ class AndroidCheckLocationPermissionTest {
             ContextCompat.checkSelfPermission(mockContext, Manifest.permission.ACCESS_FINE_LOCATION) 
         } answers {
             fineLocationChecked = true
-            PackageManager.PERMISSION_GRANTED
+            PackageManager.PERMISSION_DENIED  // Return DENIED so second check happens
         }
         every { 
             ContextCompat.checkSelfPermission(mockContext, Manifest.permission.ACCESS_COARSE_LOCATION) 
         } answers {
             coarseLocationChecked = true
-            PackageManager.PERMISSION_DENIED
+            PackageManager.PERMISSION_GRANTED  // This will be checked due to OR logic
         }
 
         // When: Check location permission
-        androidCheckLocationPermission.invoke()
+        val result = androidCheckLocationPermission.invoke()
 
         // Then: Verify correct permissions were checked
         assertTrue(fineLocationChecked, "Should check ACCESS_FINE_LOCATION permission")
         assertTrue(coarseLocationChecked, "Should check ACCESS_COARSE_LOCATION permission")
+        assertTrue(result, "Should return true when coarse location is granted")
         
         unmockkStatic(ContextCompat::class)
     }
