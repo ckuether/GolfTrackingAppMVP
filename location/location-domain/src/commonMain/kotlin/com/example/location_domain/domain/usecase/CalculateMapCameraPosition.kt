@@ -10,6 +10,10 @@ import com.example.shared.data.model.MapCameraPosition
 class CalculateMapCameraPosition(
     private val calculateBearings: CalculateBearings
 ) {
+    
+    companion object {
+        const val DEFAULT_ZOOM_LEVEL = 16.0f
+    }
 
     /**
      * Calculates camera position for two specific locations.
@@ -22,7 +26,7 @@ class CalculateMapCameraPosition(
     operator fun invoke(
         startLocation: Location,
         endLocation: Location,
-        defaultZoom: Float = 16.0f
+        defaultZoom: Float = DEFAULT_ZOOM_LEVEL
     ): MapCameraPosition {
         val centerLat = (startLocation.lat + endLocation.lat) / 2
         val centerLng = (startLocation.long + endLocation.long) / 2
