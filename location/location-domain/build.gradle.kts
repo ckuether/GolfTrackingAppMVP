@@ -13,12 +13,20 @@ kotlin {
     // which platforms this KMP module supports.
     // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
     androidLibrary {
-        namespace = "com.example.location-domain"
+        namespace = "com.example.location_domain"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
         
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
+        }
+
+        packaging {
+            resources {
+                excludes += "/META-INF/{AL2.0,LGPL2.1}"
+                excludes += "META-INF/LICENSE.md"
+                excludes += "META-INF/LICENSE-notice.md"
+            }
         }
 
         withHostTestBuilder {
@@ -88,6 +96,8 @@ kotlin {
 
         getByName("androidDeviceTest") {
             dependencies {
+                implementation(libs.mockk)
+
                 implementation(libs.androidx.runner)
                 implementation(libs.androidx.core)
                 implementation(libs.androidx.testExt.junit)
