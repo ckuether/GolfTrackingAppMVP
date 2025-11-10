@@ -22,6 +22,7 @@ cocoapods = "2.2.20"
 assertk = "0.28.1"
 coreKtx = "1.6.1"
 composeTest = "1.6.8"
+mockk = "1.13.8"
 
 ## Database
 ksp = "2.2.10-2.0.2"
@@ -101,6 +102,8 @@ assertk = { module = "com.willowtreeapps.assertk:assertk-jvm", version.ref = "as
 compose-ui-test-junit4-android = { module = "org.jetbrains.compose.ui:ui-test-junit4-android", version.ref = "composeTest" }
 compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "composeTest" }
 core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "coreKtx" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockk-android = { module = "io.mockk:mockk-android", version.ref = "mockk" }
 
 core = { group = "androidx.core", name = "core", version.ref = "coreVersion" }
 

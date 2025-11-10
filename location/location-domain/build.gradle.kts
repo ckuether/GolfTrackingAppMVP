@@ -75,6 +75,12 @@ kotlin {
             }
         }
 
+        getByName("androidHostTest") {
+            dependencies {
+                implementation(libs.mockk)
+            }
+        }
+
         getByName("androidDeviceTest") {
             dependencies {
                 implementation(libs.androidx.runner)
