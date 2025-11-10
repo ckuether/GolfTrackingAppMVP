@@ -1,3 +1,6 @@
+import org.jetbrains.compose.ExperimentalComposeLibrary
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidKotlinMultiplatformLibrary)
@@ -10,9 +13,21 @@ kotlin {
     // which platforms this KMP module supports.
     // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
     androidLibrary {
-        namespace = "com.example.location-domain"
+        namespace = "com.example.location_domain"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
+        
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+
+        packaging {
+            resources {
+                excludes += "/META-INF/{AL2.0,LGPL2.1}"
+                excludes += "META-INF/LICENSE.md"
+                excludes += "META-INF/LICENSE-notice.md"
+            }
+        }
 
         withHostTestBuilder {
         }
@@ -57,6 +72,12 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(libs.kotlin.test)
+                implementation(libs.kotlin.test.annotations.common)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.koin.test)
+
+                @OptIn(ExperimentalComposeLibrary::class)
+                implementation(libs.compose.ui.test)
             }
         }
 
@@ -67,8 +88,16 @@ kotlin {
             }
         }
 
+        getByName("androidHostTest") {
+            dependencies {
+                implementation(libs.mockk)
+            }
+        }
+
         getByName("androidDeviceTest") {
             dependencies {
+                implementation(libs.mockk)
+
                 implementation(libs.androidx.runner)
                 implementation(libs.androidx.core)
                 implementation(libs.androidx.testExt.junit)

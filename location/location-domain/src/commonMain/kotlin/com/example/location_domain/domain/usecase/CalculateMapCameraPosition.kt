@@ -1,6 +1,5 @@
 package com.example.location_domain.domain.usecase
 
-import com.example.shared.data.model.Hole
 import com.example.shared.data.model.Location
 import com.example.shared.data.model.MapCameraPosition
 
@@ -11,25 +10,9 @@ import com.example.shared.data.model.MapCameraPosition
 class CalculateMapCameraPosition(
     private val calculateBearings: CalculateBearings
 ) {
-
-    /**
-     * Calculates the optimal camera position for displaying a golf hole.
-     *
-     * @param hole The golf hole containing tee and flag locations
-     * @param defaultZoom The default zoom level to use
-     * @return CameraPosition containing center coordinates, zoom, and bearing
-     */
-    operator fun invoke(hole: Hole, defaultZoom: Float = 16.0f): MapCameraPosition {
-        val centerLat = (hole.teeLocation.lat + hole.flagLocation.lat) / 2
-        val centerLng = (hole.teeLocation.long + hole.flagLocation.long) / 2
-        val bearing = calculateBearings(hole.teeLocation, hole.flagLocation)
-
-        return MapCameraPosition(
-            centerLat = centerLat,
-            centerLng = centerLng,
-            zoom = defaultZoom,
-            bearing = bearing.toFloat()
-        )
+    
+    companion object {
+        const val DEFAULT_ZOOM_LEVEL = 16.0f
     }
 
     /**
@@ -43,7 +26,7 @@ class CalculateMapCameraPosition(
     operator fun invoke(
         startLocation: Location,
         endLocation: Location,
-        defaultZoom: Float = 16.0f
+        defaultZoom: Float = DEFAULT_ZOOM_LEVEL
     ): MapCameraPosition {
         val centerLat = (startLocation.lat + endLocation.lat) / 2
         val centerLng = (startLocation.long + endLocation.long) / 2
