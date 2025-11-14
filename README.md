@@ -108,9 +108,9 @@ composeApp
 
 ### **Use Case Pattern**
 Domain logic encapsulated in Use Cases:
-- `TrackSingleRoundEventUseCase`
-- `SaveScoreCardUseCase` 
-- `GetRoundEventsUseCase`
+- `TrackSingleRoundEvent`
+- `SaveScoreCard` 
+- `GetRoundEvents`
 
 ### **Repository Pattern**
 Data access abstracted through repositories in shared module with clean interfaces
