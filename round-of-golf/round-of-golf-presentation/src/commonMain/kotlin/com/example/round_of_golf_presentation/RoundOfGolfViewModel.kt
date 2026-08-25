@@ -36,7 +36,7 @@ class RoundOfGolfViewModel(
     private val locationTrackingService: LocationTrackingService,
     private val trackEventUseCase: TrackSingleRoundEvent,
     private val checkLocationPermission: CheckLocationPermission,
-    private val requestLocationPermission: RequestLocationPermission,
+    private val requestLocationPermissionUseCase: RequestLocationPermission,
     private val saveScoreCard: SaveScoreCard,
     private val logger: Logger
 ) : ViewModel() {
@@ -187,7 +187,7 @@ class RoundOfGolfViewModel(
             _locationState.value = _locationState.value.copy(isRequestingPermission = true, error = null)
 
             try {
-                val result = requestLocationPermission()
+                val result = requestLocationPermissionUseCase()
 
                 when (result) {
                     is PermissionResult.Granted -> {
