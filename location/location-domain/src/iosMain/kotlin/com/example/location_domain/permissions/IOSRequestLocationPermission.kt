@@ -18,6 +18,11 @@ class IOSRequestLocationPermission : RequestLocationPermission {
 
     private val locationManager = CLLocationManager()
 
+    // Strong reference required: CLLocationManager.delegate is a weak Objective-C property,
+    // so Kotlin/Native's GC can collect a delegate that isn't referenced anywhere else,
+    // silently dropping the authorization callback and hanging the coroutine forever.
+    private var pendingDelegate: CLLocationManagerDelegateProtocol? = null
+
     override suspend fun invoke(): PermissionResult {
         val currentStatus = CLLocationManager.Companion.authorizationStatus()
 
@@ -65,6 +70,7 @@ class IOSRequestLocationPermission : RequestLocationPermission {
                         }
                     }
 
+                    pendingDelegate = null
                     if (continuation.isActive) {
                         continuation.resume(result)
                     }
@@ -74,17 +80,20 @@ class IOSRequestLocationPermission : RequestLocationPermission {
                     manager: CLLocationManager,
                     didFailWithError: NSError
                 ) {
+                    pendingDelegate = null
                     if (continuation.isActive) {
                         continuation.resume(PermissionResult.Denied)
                     }
                 }
             }
 
+            pendingDelegate = delegate
             locationManager.delegate = delegate
             locationManager.requestWhenInUseAuthorization()
 
             continuation.invokeOnCancellation {
                 locationManager.delegate = null
+                pendingDelegate = null
             }
         }
     }

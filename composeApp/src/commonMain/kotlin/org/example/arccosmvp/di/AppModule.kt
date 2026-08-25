@@ -33,7 +33,7 @@ val appModule = module {
             locationTrackingService = get(),
             trackEventUseCase = get(),
             checkLocationPermission = get(),
-            requestLocationPermission = get(),
+            requestLocationPermissionUseCase = get(),
             saveScoreCard = get(),
             logger = get()
         )
